@@ -1,3 +1,7 @@
+"""
+    Setup enviroment variable value
+"""
+
 enviroment = {
     "prod": {
         "Mongourl": "mongodb+srv://jaykakadiyawork:FB30fRUM8DV0U1xk@cluster0.wwspsfj.mongodb.net/?retryWrites=true&w=majority",

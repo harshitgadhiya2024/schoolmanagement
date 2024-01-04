@@ -1,0 +1,21 @@
+[
+  {
+    "photo_link": "static/uploads/profiles/jaypatel8980.jpg",
+    "admin_id": 1882944623773083,
+    "username": "jaypatel8980",
+    "first_name": "jay",
+    "last_name": "patel",
+    "password": "Jay@#0401",
+    "gender": "Male",
+    "contact_no": "+91 9316727742",
+    "emergency_contact_no": "+91 9601406607",
+    "email": "harshitgadhiya8980@gmail.com",
+    "address": "ahmedabad",
+    "city": "ahmedabad",
+    "state": "gujarat",
+    "country": "USA",
+    "type": "admin",
+    "inserted_on": "01-03-2024 22:40:26",
+    "updated_on": "01-03-2024 22:40:27"
+  }
+]
