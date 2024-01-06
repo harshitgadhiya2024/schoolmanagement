@@ -2569,7 +2569,7 @@ footer p {
 	padding: 1.875rem 1.875rem 0;
 }
 .page-header {
-	margin-bottom: 1.875rem;
+	margin-bottom: auto;
 }
 .page-header .breadcrumb {
     background-color: transparent;
