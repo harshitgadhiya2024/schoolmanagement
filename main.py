@@ -9,7 +9,7 @@ from flask_cors import CORS
 import json
 from constant import constant_data
 from operations.mongo_connection import mongo_connect, data_added, find_all_data, find_spec_data, update_mongo_data, delete_data
-from operations.common_func import export_panel_data, delete_panel_data, get_unique_admin_id, get_admin_data, validate_phone_number, password_validation, logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id, get_unique_teacher_id
+from operations.common_func import export_panel_data, delete_panel_data, get_unique_admin_id, get_admin_data, validate_phone_number, password_validation, logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id, get_unique_teacher_id, search_panel_data
 import random
 from flask_mail import Mail
 from werkzeug.utils import secure_filename
@@ -358,6 +358,50 @@ def edit_data(object):
         app.logger.debug(f"Error in delete data from database: {e}")
         flash("Please try again...")
         return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
+
+@app.route("/admin/search_data/<object>", methods=["GET", "POST"])
+def search_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        print("Inside search dict")
+        panel = object
+        print(f"Panel : {panel}")
+        search_dict = {}
+        all_keys = ""
+        all_values = ""
+        if panel == "admin":
+            admin_id = request.form['student_id']
+            username = request.form['username']
+            contact_no = request.form['contact_no']
+            email = request.form['email']
+            coll_name = "admin_data"
+            search_dict = search_panel_data(app, client, "college_management", admin_id, coll_name)
+        elif panel == "student":
+            student_id = request.form['student_id']
+            username = request.form['username']
+            contact_no = request.form['contact_no']
+            email = request.form['email']
+            print("Inside here")
+            coll_name = "students_data"
+            search_dict = search_panel_data(app, client, "college_management", student_id, coll_name)
+        else:
+            teacher_id = request.form['student_id']
+            username = request.form['username']
+            contact_no = request.form['contact_no']
+            email = request.form['email']
+            coll_name = "teacher_data"
+            search_dict = search_panel_data(app, client, "college_management", teacher_id, coll_name)
+        print(f"Result is  : {search_dict}")
+        return render_template('search_result.html', search_dict=search_dict)
+
+    except Exception as e:
+        app.logger.debug(f"Error in searching data from database: {e}")
+        print(e)
+        flash("Please try again...")
+        return render_template('students.html')
 
 
 ########################### Admin Operations ##################################

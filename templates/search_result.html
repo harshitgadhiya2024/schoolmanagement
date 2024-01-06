@@ -193,127 +193,36 @@
 				</div>
 				<!-- /Page Header -->
 
-				<div class="student-group-form">
-					<form action="/admin/search_data/student" method="POST" enctype="multipart/form-data">
-						<div class="row">
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="number" name="student_id" class="form-control"
-										placeholder="Search by Student ID ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="text" name="username" class="form-control"
-										placeholder="Search by Username ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="text" name="contact_no" class="form-control"
-										placeholder="Search by Contact No ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="email" name="email" class="form-control"
-										placeholder="Search by Email ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-<!--								Removing panel functionality-->
-<!--								<div class="form-group">-->
-<!--									<select name="type" class="form-control">-->
-<!--										<option>Student</option>-->
-<!--										<option>Teacher</option>-->
-<!--										<option>Admin</option>-->
-<!--									</select>-->
-<!--								</div>-->
-							</div>
-							<div class="col-lg-2">
-								<div class="search-student-btn">
-									<button type="btn" class="btn btn-primary">Search</button>
-								</div>
-							</div>
-						</div>
-					</form>
-				</div>
-
-				<div class="row">
-					<div class="col-sm-12">
-
-						<div class="card card-table comman-shadow">
-							<div class="card-body">
-
-								<!-- Page Header -->
-								<div class="page-header">
-									<div class="row align-items-center">
-										<div class="col">
-											<h3 class="page-title">Students</h3>
-										</div>
-										<div class="col-auto text-end float-end ms-auto download-grp">
-											<!-- <a href="#" class="btn btn-outline-primary me-2"><i
-													class="fas fa-download"></i> Download</a> -->
-											<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
-												data-bs-toggle="dropdown" aria-expanded="false">
-												<i class="fas fa-download"></i> Export
-											</button>
-											<ul class="dropdown-menu">
-												<li><a class="dropdown-item" href="/admin/export/student-json">JSON</a></li>
-												<li><a class="dropdown-item" href="/admin/export/student-excel">EXCEL</a></li>
-												<li><a class="dropdown-item" href="/admin/export/student-csv">CSV</a></li>
-											</ul>
-											<a href="/admin/add_student" class="btn btn-primary"><i
-													class="fas fa-plus"></i></a>
-										</div>
-									</div>
-								</div>
-								<!-- /Page Header -->
-
-								<div class="table-responsive">
-									<table
-										class="table border-0 star-student table-hover table-center mb-0 datatable table-striped">
-										<thead class="student-thread">
-											<tr>
-												<!-- <th>
-														<div class="form-check check-tables">
-															<input class="form-check-input" type="checkbox"  value="something">
-														</div>
-													</th> -->
-												{% for key in all_keys %}
-												<th>{{key}}</th>
-												{% endfor %}
-												<th class="text-end">Action</th>
-											</tr>
-										</thead>
-										<tbody>
-											{% for value in all_values %}
-											<tr>
-												<!-- <td>
-														<div class="form-check check-tables">
-															<input class="form-check-input" type="checkbox"  value="something">
-														</div>
-													</td> -->
-												{% for each_value in value %}
-												<td>{{each_value}}</td>
-												{% endfor %}
-												<td class="text-end">
-													<div class="actions">
-														<a href="/admin/edit_data/student-{{value[1]}}" class="btn btn-sm bg-danger-light">
-															<i class="feather-edit"></i>
-														</a>
-														<a href="/admin/delete_data/student-{{value[1]}}" class="btn btn-sm bg-danger-light">
-															<i class="fas fa-trash-alt"></i>
-														</a>
-													</div>
-												</td>
-											</tr>
-											{% endfor %}
-										</tbody>
-									</table>
-								</div>
-							</div>
-						</div>
+				<div class="table-responsive">
+					<div>
+						<style>
+							table {
+							  border-collapse: collapse;
+							}
+						  
+							th, td {
+							  border: 1px solid black;
+							  padding: 10px;
+							}
+						</style>
+						<table>
+							<thead>
+								<tr>
+									<th>Key</th>
+									<th>Value</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for key, value in search_dict.items() %}
+									{% if key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
+									<tr>
+										<td> {{ key }}</td>
+										<td> {{ value }}</td>
+									</tr>
+									{% endif %}
+								{% endfor %}
+							</tbody>
+						</table>
 					</div>
 				</div>
 			</div>
@@ -329,7 +238,7 @@
 	</div>
 	<!-- /Main Wrapper -->
 
-	<!-- jQuery -->
+    <!-- jQuery -->
 	<script src="/static/assets//js/jquery-3.7.1.min.js"></script>
 
 	<!-- Bootstrap Core JS -->
