@@ -301,20 +301,25 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
     """
 
     try:
-        if coll_name == "admin_data":
-            """"""
-        elif coll_name == "students_data":
-            print("Inside students data column in college mgmnt database")
-            db = client[db_name]
-            print(f"db is : {db}")
-            coll = db[coll_name]
-            print(f"Coll is : {coll}")
-            print(f"Search value : {search_value} and type is : {type(search_value)}")
-            result = coll.find_one({'student_id':int(search_value)})
-            print(f"Res is : {result}")
-        else:
-            """"""
+        db = client[db_name]
+        coll = db[coll_name]
+        key, value = search_value.split("|")
+        data_type_converters = {
+            "admin_data": {
+                "admin_id": int,
+            },
+            "students_data": {
+                "student_id": int,
+            },
+            "default": {
+                "teacher_id": int,
+            },
+        }
 
+        converter = data_type_converters.get(coll_name, data_type_converters["default"])
+        search_value = converter.get(key, str)(value.strip())
+
+        result = coll.find_one({key:search_value})
         return result
 
     except Exception as e:

@@ -359,7 +359,7 @@ def edit_data(object):
         flash("Please try again...")
         return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
 
-@app.route("/admin/search_data/<object>", methods=["GET", "POST"])
+@app.route("/search_data/<object>", methods=["GET", "POST"])
 def search_data(object):
     """
     That funcation can use delete from student, teacher and admin from admin panel
@@ -373,25 +373,39 @@ def search_data(object):
         all_keys = ""
         all_values = ""
         if panel == "admin":
-            admin_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
+            admin_id = request.form.get('admin_id', '')
+            username = request.form.get('username', '')
+            contact_no = request.form.get('contact_no', '')
+            email = request.form.get('email', '')
+            search_value = {
+                bool(admin_id.strip()): 'admin_id|' + admin_id,
+                bool(username.strip()): 'username|' + username,
+                bool(contact_no.strip()): 'contact_no|' + contact_no,
+            }.get(True, 'email|' + email)
             coll_name = "admin_data"
-            search_dict = search_panel_data(app, client, "college_management", admin_id, coll_name)
+            search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
         elif panel == "student":
-            student_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
-            print("Inside here")
+            student_id = request.form.get('student_id', '')
+            username = request.form.get('username', '')
+            contact_no = request.form.get('contact_no', '')
+            email = request.form.get('email', '')
+            search_value = {
+                bool(student_id.strip()): 'student_id|' + student_id,
+                bool(username.strip()): 'username|' + username,
+                bool(contact_no.strip()): 'contact_no|' + contact_no,
+            }.get(True, 'email|' + email)
             coll_name = "students_data"
-            search_dict = search_panel_data(app, client, "college_management", student_id, coll_name)
+            search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
         else:
-            teacher_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
+            teacher_id = request.form.get('teacher_id', '')
+            username = request.form.get('username', '')
+            contact_no = request.form.get('contact_no', '')
+            email = request.form.get('email', '')
+            search_value = {
+                bool(teacher_id.strip()): 'teacher_id|' + teacher_id,
+                bool(username.strip()): 'username|' + username,
+                bool(contact_no.strip()): 'contact_no|' + contact_no,
+            }.get(True, 'email|' + email)
             coll_name = "teacher_data"
             search_dict = search_panel_data(app, client, "college_management", teacher_id, coll_name)
         print(f"Result is  : {search_dict}")
