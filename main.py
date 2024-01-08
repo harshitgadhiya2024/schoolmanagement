@@ -332,6 +332,7 @@ def edit_data(object):
     try:
         spliting_object = object.split("/")
         panel = spliting_object[0]
+        print(f"Panel : {panel}")
         id = spliting_object[1]
         delete_dict = {}
         if panel == "admin":
@@ -353,55 +354,53 @@ def edit_data(object):
             delete_panel_data(app, client, "college_management", coll_name, delete_dict)
             return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
 
-
     except Exception as e:
-        app.logger.debug(f"Error in delete data from database: {e}")
+        app.logger.debug(f"Error in edit data from database: {e}")
         flash("Please try again...")
-        return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
+        spliting_object = object.split("/")
+        panel = spliting_object[0]
+        return render_template(f'{panel}s.html')
 
-@app.route("/admin/search_data/<object>", methods=["GET", "POST"])
+@app.route("/search_data/<object>", methods=["GET", "POST"])
 def search_data(object):
     """
-    That funcation can use delete from student, teacher and admin from admin panel
+    That funcation can use search data from student, teacher and admin from admin panel
     """
 
     try:
-        print("Inside search dict")
         panel = object
         print(f"Panel : {panel}")
         search_dict = {}
-        all_keys = ""
-        all_values = ""
-        if panel == "admin":
-            admin_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
-            coll_name = "admin_data"
-            search_dict = search_panel_data(app, client, "college_management", admin_id, coll_name)
-        elif panel == "student":
-            student_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
-            print("Inside here")
-            coll_name = "students_data"
-            search_dict = search_panel_data(app, client, "college_management", student_id, coll_name)
+        id = request.form.get('id', '')
+        username = request.form.get('username', '')
+        contact_no = request.form.get('contact_no', '')
+        email = request.form.get('email', '')
+        panel_mapping = {
+            "admin": "admin_data",
+            "student": "students_data",
+            "teacher": "teacher_data"
+        }
+        if panel in panel_mapping:
+            if id:
+                search_value = f'{panel}_id|{id}'
+            elif username:
+                search_value = f'username|{username}'
+            elif contact_no:
+                search_value = f'contact_no|{contact_no}'
+            else:
+                search_value = f'email|{email}'
+            coll_name = panel_mapping[panel]
+            search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
         else:
-            teacher_id = request.form['student_id']
-            username = request.form['username']
-            contact_no = request.form['contact_no']
-            email = request.form['email']
-            coll_name = "teacher_data"
-            search_dict = search_panel_data(app, client, "college_management", teacher_id, coll_name)
-        print(f"Result is  : {search_dict}")
+            app.logger.debug(f"Error in searching data from database")
         return render_template('search_result.html', search_dict=search_dict)
 
     except Exception as e:
         app.logger.debug(f"Error in searching data from database: {e}")
         print(e)
         flash("Please try again...")
-        return render_template('students.html')
+        panel = object
+        return render_template(f'{panel}s.html')
 
 
 ########################### Admin Operations ##################################

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+</head>
+<body>
+    <form id="search" method="POST" enctype="multipart/form-data">
+        <div class="row">
+            <div class="col-sm-auto" style="padding: 0.75rem 1rem 0 1rem;">
+                <div class="form-group">
+                    <p>Search By :</p>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <input type="text" inputmode="numeric" name="id" class="form-control"
+                        placeholder="ID ...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <input type="text" name="username" class="form-control"
+                        placeholder="Username ...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <input type="text" name="contact_no" class="form-control"
+                        placeholder="Contact No ...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-group">
+                    <input type="email" name="email" class="form-control"
+                        placeholder="Email ...">
+                </div>
+            </div>
+            <div class="col-md-2" style="padding-left: 4rem;">
+                <div class="search-student-btn">
+                    <button type="btn" class="btn btn-primary">Search</button>
+                </div>
+            </div>
+        </div>
+    </form>
+    <script>
+        var panel = sessionStorage.getItem("panel");
+        action_name = "/search_data/" + panel;
+        document.getElementById('search').action = action_name;
+    </script>
+</body>
+</html>
