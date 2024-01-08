@@ -304,6 +304,7 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
         db = client[db_name]
         coll = db[coll_name]
         key, value = search_value.split("|")
+        print(f"Key is {key} and value is {value}")
         data_type_converters = {
             "admin_data": {
                 "admin_id": int,
@@ -323,4 +324,4 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
         return result
 
     except Exception as e:
-        app.logger.debug(f"Error in export data from database: {e}")
+        app.logger.debug(f"Error in search data from database: {e}")

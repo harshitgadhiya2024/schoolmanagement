@@ -194,50 +194,27 @@
 				<!-- /Page Header -->
 
 				<!-- Search data display -->
-				<!-- <div class="container">
-					<div class="container-fluid">
-						<style>
-							table, th, td {
-							  border: 1px solid black;
-							  border-radius: 10px;
-							  padding: 10px;
-							}
-						</style>
-						<table>
-							<thead>
-								<tr>
-									<th>Key</th>
-									<th>Value</th>
-								</tr>
-							</thead>
-							<tbody>
-								{% for key, value in search_dict.items() %}
-									{% if key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
-									<tr>
-										<td> {{ key }}</td>
-										<td> {{ value }}</td>
-									</tr>
-									{% endif %}
-								{% endfor %}
-							</tbody>
-						</table>
-					</div>
-				</div> -->
-
-				<div class="table-responsive-sm" style="padding-bottom: 7%;">
-					<style>
-						table, td {
-							border: 1px solid black;
-							border-radius: 10px;
-						}
-					</style>
-					<table class="table table-striped" width="75%">
+				<style>
+					table, th, td {
+						border: 0.15rem solid black;
+					}
+					th, td {
+						padding: 0.5rem 0 0.5rem 1rem;
+					}
+				</style>
+				<div class="container" style="padding: 0 0 7% 20%;">
+					<table width="65%">
 						<tbody>
 							{% for key, value in search_dict.items() %}
-								{% if key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
+								{% if key in ['student_id'] %}
 								<tr>
-									<td> {{ key.upper().replace("_"," ") }}</td>
-									<td> {{ value }}</td>
+									<th>{{ key.upper().replace("_"," ") }}</th>
+									<th>{{ value }}</th>
+								</tr>
+								{% elif key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
+								<tr>
+									<td>{{ key.upper().replace("_"," ") }}</td>
+									<td>{{ value }}</td>
 								</tr>
 								{% endif %}
 							{% endfor %}

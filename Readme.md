@@ -7,7 +7,9 @@
 ## Added styling to table
 ## Addedfunctionality to the search feature to take one or more arguments.
 ## Added feature to admin as well as teacher table too.
+## have included search by feature in all pages.
 
 # Features to be added --
-## Need to make the table a better design.
 ## Need to make a back button for the search page so that it redirect back to the list page.
+## Need to add edit option.
+## Include import option in all pages.

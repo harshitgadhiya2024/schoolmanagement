@@ -193,51 +193,14 @@
 				</div>
 				<!-- /Page Header -->
 
+				<!-- Search Header -->
 				<div class="student-group-form">
-					<form action="/search_data/student" method="POST" enctype="multipart/form-data">
-						<div class="row">
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="number" name="student_id" class="form-control"
-										placeholder="Search by Student ID ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="text" name="username" class="form-control"
-										placeholder="Search by Username ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="text" name="contact_no" class="form-control"
-										placeholder="Search by Contact No ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-								<div class="form-group">
-									<input type="email" name="email" class="form-control"
-										placeholder="Search by Email ...">
-								</div>
-							</div>
-							<div class="col-lg-2 col-md-6">
-<!--								Removing panel functionality-->
-<!--								<div class="form-group">-->
-<!--									<select name="type" class="form-control">-->
-<!--										<option>Student</option>-->
-<!--										<option>Teacher</option>-->
-<!--										<option>Admin</option>-->
-<!--									</select>-->
-<!--								</div>-->
-							</div>
-							<div class="col-lg-2">
-								<div class="search-student-btn">
-									<button type="btn" class="btn btn-primary">Search</button>
-								</div>
-							</div>
-						</div>
-					</form>
+					<script>
+						sessionStorage.setItem("panel", "student");
+					</script>
+					{% include 'common_files/search_header.html' %}
 				</div>
+				<!-- /Search Header -->
 
 				<div class="row">
 					<div class="col-sm-12">
