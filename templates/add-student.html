@@ -159,6 +159,13 @@
 								<li><a href="/admin/add_subject">Subject Add</a></li>
 							</ul>
 						</li>
+						<li class="submenu">
+							<a href="#"><i class="fas fa-book-reader"></i> <span> Classes</span> <span
+									class="menu-arrow"></span></a>
+							<ul>
+								<li><a href="/admin/classes_data">Classes List</a></li>
+							</ul>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -225,8 +232,8 @@
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
 												<label>Password <span class="login-danger">*</span></label>
-												<input class="form-control" value="{{password}}"
-													name="password" type="password" placeholder="Enter Password" required>
+												<input class="form-control pass-input" value="{{password}}" name="password" type="text" required>
+												<span class="profile-views feather-eye toggle-password"></span>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">
@@ -260,14 +267,14 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Phone-Number </label>
+												<label>Phone-Number  <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{contact_no}}" name="contact_no"
 													type="number" placeholder="Enter Phone Number" required>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Emergency Phone-Number </label>
+												<label>Emergency Phone-Number  <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{emergency_contact_no}}"
 													name="emer_contact_no" type="number"
 													placeholder="Enter Emergency Phone Number" required>
@@ -330,10 +337,25 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Enrolled Cource </label>
-												<input class="form-control" name="enrolled_cource"
-													value="{{enrolled_cource}}" type="text"
-													placeholder="Enter Enrolled Cource">
+												<label>Department <span class="login-danger">*</span></label>
+												<select name="department" value="{{department}}" class="form-control select"
+													required>
+													{% for department in alldepartment %}
+													<option>{{department}}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Classes <span class="login-danger">*</span></label>
+												<select name="classes" value="{{classes}}" class="form-control select"
+													required>
+													<option>A</option>
+													<option>B</option>
+													<option>C</option>
+													<option>D</option>
+												</select>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">

@@ -32,10 +32,6 @@ def data_added(app, db, coll_name, new_dict):
     :return: status
     """
     try:
-        try:
-            del new_dict["_id"]
-        except:
-            pass
         coll = db[coll_name]
         coll.insert_one(new_dict)
         return "add_data"
