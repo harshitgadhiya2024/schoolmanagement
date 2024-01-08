@@ -13,3 +13,4 @@
 ## Need to make a back button for the search page so that it redirect back to the list page.
 ## Need to add edit option.
 ## Include import option in all pages.
+## Need to add chat functionality for interaction.

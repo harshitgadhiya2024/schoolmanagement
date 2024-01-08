@@ -330,7 +330,7 @@ def edit_data(object):
     """
 
     try:
-        spliting_object = object.split("/")
+        spliting_object = object.split("-")
         panel = spliting_object[0]
         print(f"Panel : {panel}")
         id = spliting_object[1]
@@ -339,25 +339,20 @@ def edit_data(object):
             coll_name = "admin_data"
             delete_dict["admin_id"] = id
             delete_dict["type"] = "admin"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
         elif panel == "student":
             delete_dict["student_id"] = id
             delete_dict["type"] = "student"
             coll_name = "students_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
         else:
             delete_dict["teacher_id"] = id
             delete_dict["type"] = "teacher"
             coll_name = "teacher_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
+        return render_template(f'add-{panel}.html')
 
     except Exception as e:
         app.logger.debug(f"Error in edit data from database: {e}")
         flash("Please try again...")
-        spliting_object = object.split("/")
+        spliting_object = object.split("-")
         panel = spliting_object[0]
         return render_template(f'{panel}s.html')
 
