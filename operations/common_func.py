@@ -10,6 +10,7 @@ import phonenumbers
 import pandas as pd
 import json
 import os
+import pycountry
 
 def logger_con(app):
     """
@@ -108,6 +109,46 @@ def get_unique_student_id(app, all_student_id):
 
     except Exception as e:
         app.logger.debug(f"Error in get unique student id: {e}")
+
+def get_unique_department_id(app, all_deparment_id):
+    """
+    Get unique department id
+
+    :param app: app-name
+    :param all_deparment_id: registered all department ids
+    :return: unique department id
+    """
+    try:
+        flag = True
+        while flag:
+            depart_id = random.randint(100000, 999999)
+            if depart_id not in all_deparment_id:
+                flag = False
+
+        return depart_id
+
+    except Exception as e:
+        app.logger.debug(f"Error in get unique department id: {e}")
+
+def get_unique_subject_id(app, all_subject_id):
+    """
+    Get unique department id
+
+    :param app: app-name
+    :param all_subject_id: registered all subject ids
+    :return: unique subject id
+    """
+    try:
+        flag = True
+        while flag:
+            sub_id = random.randint(1000, 9999)
+            if sub_id not in all_subject_id:
+                flag = False
+
+        return sub_id
+
+    except Exception as e:
+        app.logger.debug(f"Error in get unique subject id: {e}")
 
 
 def get_unique_teacher_id(app, all_teacher_id):
@@ -232,8 +273,7 @@ def get_admin_data(app, client, db_name, coll_name):
             all_values = list(each_res.values())
             values.append(all_values[1:])
 
-
-        return keys[0], values
+        return keys, values
 
     except Exception as e:
         app.logger.debug(f"Error in get data from admin database: {e}")
@@ -251,12 +291,42 @@ def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     """
 
     try:
+        type = delete_dict.get("type", "else")
         db = client[db_name]
         coll = db[coll_name]
-        coll.delete_one(delete_dict)
-        coll1 = db["login_mapping"]
-        coll1.delete_one(delete_dict)
+        if type == "student" or type == "teacher" or type == "admin":
+            coll.delete_one(delete_dict)
+            coll1 = db["login_mapping"]
+            coll1.delete_one(delete_dict)
+        else:
+            coll.delete_one(delete_dict)
+
         return "data deleted"
+
+    except Exception as e:
+        app.logger.debug(f"Error in delete data from database: {e}")
+
+def delete_all_panel_data(app, client, db_name, coll_name, panel):
+    """
+    delete data from database
+
+    :param app: app-name
+    :param client: mongo-client
+    :param db_name: database-name
+    :param coll_name: collection-name
+    :return: status
+    """
+
+    try:
+        db = client[db_name]
+        coll = db[coll_name]
+        if panel == "student" or panel == "teacher" or panel == "admin":
+            coll.delete_many({})
+            coll1 = db["login_mapping"]
+            coll1.delete_many({"type": panel})
+        else:
+            coll.delete_many({})
+        return "all data deleted"
 
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
@@ -325,3 +395,18 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
 
     except Exception as e:
         app.logger.debug(f"Error in search data from database: {e}")
+
+def get_all_country_state_names(app):
+    try:
+        country_names = [country.name for country in pycountry.countries]
+        netherlands_subdivisions = pycountry.subdivisions.get(country_code='NL')
+        all_state_names = [subdivision.name for subdivision in netherlands_subdivisions]
+        country_codes = phonenumbers.COUNTRY_CODE_TO_REGION_CODE
+        list_country_code = []
+        for country_code, region_codes in country_codes.items():
+            list_country_code.append("+" + str(country_code))
+
+        return country_names, all_state_names, list_country_code
+
+    except Exception as e:
+        app.logger.debug(f"Error in get country, state or city from database: {e}")

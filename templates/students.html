@@ -161,6 +161,13 @@
 								<li><a href="/admin/add_subject">Subject Add</a></li>
 							</ul>
 						</li>
+						<li class="submenu">
+							<a href="#"><i class="fas fa-book-reader"></i> <span> Classes</span> <span
+									class="menu-arrow"></span></a>
+							<ul>
+								<li><a href="/admin/classes_data">Classes List</a></li>
+							</ul>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -217,14 +224,15 @@
 										<div class="col-auto text-end float-end ms-auto download-grp">
 											<!-- <a href="#" class="btn btn-outline-primary me-2"><i
 													class="fas fa-download"></i> Download</a> -->
+											<a href="/admin/deleteall/student" class="btn btn-outline-primary me-2"><i class="fa-solid fa-trash"></i>  Delete All</a>
 											<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
 												data-bs-toggle="dropdown" aria-expanded="false">
 												<i class="fas fa-download"></i> Export
 											</button>
 											<ul class="dropdown-menu">
-												<li><a class="dropdown-item" href="/admin/export/student-json">JSON</a></li>
 												<li><a class="dropdown-item" href="/admin/export/student-excel">EXCEL</a></li>
 												<li><a class="dropdown-item" href="/admin/export/student-csv">CSV</a></li>
+												<li><a class="dropdown-item" href="/admin/export/student-json">JSON</a></li>
 											</ul>
 											<a href="/admin/add_student" class="btn btn-primary"><i
 													class="fas fa-plus"></i></a>
