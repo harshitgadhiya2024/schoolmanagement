@@ -191,7 +191,7 @@
 					</div>
 					<!-- /Page Header -->
 					
-					<div class="student-group-form">
+					<!-- <div class="student-group-form">
 						<form action="/search_data/classes" method="POST" enctype="multipart/form-data">
 							<div class="row">
 								<div class="col-lg-10 col-md-6">
@@ -207,7 +207,16 @@
 								</div>
 							</div>
 						</form>
+					</div> -->
+
+					<!-- Search Header -->
+					<div class="student-group-form">
+						<script>
+							sessionStorage.setItem("panel", "class");
+						</script>
+						{% include 'common_files/search_header.html' %}
 					</div>
+					<!-- /Search Header -->
 				
 					<div class="row">
 						<div class="col-sm-12">

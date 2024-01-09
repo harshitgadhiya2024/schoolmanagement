@@ -6,7 +6,7 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-	<title>Portal - Students</title>
+	<title>Search Result</title>
 
 	<!-- Favicon -->
 	<link rel="shortcut icon" href="/static/assets//img/favicon.png">
@@ -121,44 +121,51 @@
 								<li><a href="/admin_dashboard">Admin Dashboard</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
+						<li class="submenu" id="admin_submenu">
 							<a href="#"><i class="fas fa-user-cog"></i> <span> Admins</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/admin_data">Admin List</a></li>
+								<li><a href="/admin/admin_data" class="" id="adminlist">Admin List</a></li>
 								<li><a href="/admin/add_admin">Admin Add</a></li>
 							</ul>
 						</li>
-						<li class="submenu active">
+						<li class="submenu" id="student_submenu">
 							<a href="#"><i class="fas fa-graduation-cap"></i> <span> Students</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/student_data" class="active">Student List</a></li>
+								<li><a href="/admin/student_data" class="" id="studentlist">Student List</a></li>
 								<li><a href="/admin/add_student">Student Add</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
+						<li class="submenu" id="teacher_submenu">
 							<a href="#"><i class="fas fa-chalkboard-teacher"></i> <span> Teachers</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/teacher_data">Teacher List</a></li>
+								<li><a href="/admin/teacher_data" class="" id="teacherlist">Teacher List</a></li>
 								<li><a href="/admin/add_teacher">Teacher Add</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
+						<li class="submenu" id="dept_submenu">
 							<a href="#"><i class="fas fa-building"></i> <span> Departments</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/department_data">Department List</a></li>
+								<li><a href="/admin/department_data" class="" id="deptlist">Department List</a></li>
 								<li><a href="/admin/add_department">Department Add</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
+						<li class="submenu" id="subject_submenu">
 							<a href="#"><i class="fas fa-book-reader"></i> <span> Subjects</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/subject_data">Subject List</a></li>
+								<li><a href="/admin/subject_data" class="" id="subjectlist">Subject List</a></li>
 								<li><a href="/admin/add_subject">Subject Add</a></li>
+							</ul>
+						</li>
+						<li class="submenu">
+							<a href="#"><i class="fas fa-book-reader"></i> <span> Classes</span> <span
+									class="menu-arrow"></span></a>
+							<ul>
+								<li><a href="/admin/classes_data">Classes List</a></li>
 							</ul>
 						</li>
 					</ul>
@@ -193,6 +200,14 @@
 				</div>
 				<!-- /Page Header -->
 
+				<!-- Back button -->
+				<div class="container" style="padding-bottom: 2rem; line-height: 1.5rem;">
+					<div class="back-button" id="back_button">
+						<span id="back_button_text">&#8672; Back</span>
+					</div>
+				</div>
+				<!-- /Back Button -->
+
 				<!-- Search data display -->
 				<style>
 					table, th, td {
@@ -206,15 +221,15 @@
 					<table width="65%">
 						<tbody>
 							{% for key, value in search_dict.items() %}
-								{% if key in ['student_id'] %}
+								{% if key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
 								<tr>
-									<th>{{ key.upper().replace("_"," ") }}</th>
-									<th>{{ value }}</th>
-								</tr>
-								{% elif key not in ['_id','photo_link','password','inserted_on','updated_on'] %}
-								<tr>
-									<td>{{ key.upper().replace("_"," ") }}</td>
-									<td>{{ value }}</td>
+									{% if "_id" in key %}
+										<th>{{ key.upper().replace("_"," ") }}</th>
+										<th>{{ value }}</th>
+									{% else %}
+										<td>{{ key.upper().replace("_"," ") }}</td>
+										<td>{{ value }}</td>
+									{% endif %}
 								</tr>
 								{% endif %}
 							{% endfor %}
@@ -234,23 +249,51 @@
 	</div>
 	<!-- /Main Wrapper -->
 
-    <!-- jQuery -->
-	<script src="/static/assets//js/jquery-3.7.1.min.js"></script>
-
+	<!-- jQuery -->
+	<script src="/static/assets/js/jquery-3.7.1.min.js"></script>
+		
 	<!-- Bootstrap Core JS -->
-	<script src="/static/assets//js/bootstrap.bundle.min.js"></script>
-
+	<script src="/static/assets/js/bootstrap.bundle.min.js"></script>
+	
 	<!-- Feather Icon JS -->
-	<script src="/static/assets//js/feather.min.js"></script>
-
+	<script src="/static/assets/js/feather.min.js"></script>
+	
 	<!-- Slimscroll JS -->
-	<script src="/static/assets//plugins/slimscroll/jquery.slimscroll.min.js"></script>
+	<script src="/static/assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 
 	<!-- Datatables JS -->
-	<script src="/static/assets//plugins/datatables/datatables.min.js"></script>
-
+	<script src="/static/assets/plugins/datatables/datatables.min.js"></script>
+	
 	<!-- Custom JS -->
-	<script src="/static/assets//js/script.js"></script>
+	<script src="/static/assets/js/script.js"></script>
+
+	<!-- Adding active menu -->
+	<script>
+		var search_menu = '{{panel}}';
+		console.log(search_menu);
+
+		// Change cursor design
+		document.getElementById("back_button_text").onmouseenter = function(){
+			document.getElementById("back_button").style.cursor = "pointer";
+			// Change size of back_button_text to 1.5
+			document.getElementById("back_button_text").style.fontSize = "1rem";
+			document.getElementById("back_button_text").style.fontWeight = "bold";
+			document.getElementById("back_button_text").style.color = "blue";
+		}
+
+		// Change cursor design
+		document.getElementById("back_button_text").onmouseleave = function(){
+			document.getElementById("back_button").style.cursor = "default";
+			// Change size of back_button_text to 1
+			document.getElementById("back_button_text").style.fontSize = "1rem";
+			document.getElementById("back_button_text").style.fontWeight = "normal";
+			document.getElementById("back_button_text").style.color = "black";
+		}
+		
+		document.getElementById("back_button").addEventListener("click", function(){
+			history.back();
+		})
+	</script>
 </body>
 
 <!-- Mirrored from preschool.dreamstechnologies.com/template/students.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 01 Jan 2024 05:22:17 GMT -->

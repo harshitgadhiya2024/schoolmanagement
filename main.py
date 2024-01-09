@@ -16,7 +16,7 @@ from operations.common_func import (search_panel_data, delete_all_panel_data, ge
                                     get_unique_teacher_id, get_all_country_state_names)
 import random
 from flask_mail import Mail
-from flask_ngrok import run_with_ngrok
+from flask_ngrok2 import run_with_ngrok
 from werkzeug.utils import secure_filename
 
 # create a flask app instance
@@ -397,30 +397,56 @@ def edit_data(object):
     """
 
     try:
-        spliting_object = object.split("-")
-        panel = spliting_object[0]
-        print(f"Panel : {panel}")
-        id = spliting_object[1]
-        delete_dict = {}
-        if panel == "admin":
-            coll_name = "admin_data"
-            delete_dict["admin_id"] = id
-            delete_dict["type"] = "admin"
-        elif panel == "student":
-            delete_dict["student_id"] = id
-            delete_dict["type"] = "student"
-            coll_name = "students_data"
+        # We can directly assign values to panel and id variable
+        panel, id = object.split("-")
+        edit_dict = {}
+
+        # Define a mapping of panel to collection and search dictionary
+        panel_mapping = {
+            "admin": ("admin_data", {"admin_id": id, "type": "admin"}),
+            "student": ("students_data", {"student_id": id, "type": "student"}),
+            "teacher": ("teacher_data", {"teacher_id": id, "type": "teacher"}),
+        }
+
+        # Check if panel is in the mapping
+        # If it is, get the collection and search dictionary``
+        if panel in panel_mapping:
+            coll_name, edit_dict = panel_mapping[panel]
+            search_value = panel + "_id|" + id
+            edit_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
+            print(f"Search dictionary is : {edit_dict}")
+            html_page_name = f"add-{panel}.html"
+        # If it is not, set a flash message and return to the previous screen
         else:
-            delete_dict["teacher_id"] = id
-            delete_dict["type"] = "teacher"
-            coll_name = "teacher_data"
-        return render_template(f'add-{panel}.html')
+            flash("Please try again...")
+            html_page_name = f"{panel}s.html"
+        print(f"Rendered html page is : {html_page_name}")
+        country_code, contact = edit_dict["contact_no"].split(" ")
+        return render_template(html_page_name,
+            first_name = edit_dict["first_name"],
+            last_name = edit_dict["last_name"],
+            username = edit_dict["username"],
+            password = edit_dict["password"],
+            dob = edit_dict["dob"],
+            gender = edit_dict["gender"],
+            countrycode = country_code,
+            contact_no = contact,
+            emergency_contact_no = edit_dict["emergency_contact_no"],
+            email = edit_dict["email"],
+            address = edit_dict["address"],
+            admission_date = edit_dict["admission_date"],
+            city = edit_dict["city"],
+            state = edit_dict["state"],
+            country = edit_dict["country"],
+            department = edit_dict["department"],
+            classes = edit_dict["classes"],
+            batch_year = edit_dict["batch_year"])
 
     except Exception as e:
         app.logger.debug(f"Error in edit data from database: {e}")
         flash("Please try again...")
-        spliting_object = object.split("-")
-        panel = spliting_object[0]
+        print(e)
+        panel = object.split("-")[0]
         return render_template(f'{panel}s.html')
 
 @app.route("/search_data/<object>", methods=["GET", "POST"])
@@ -431,7 +457,6 @@ def search_data(object):
 
     try:
         panel = object
-        print(f"Panel : {panel}")
         search_dict = {}
         id = request.form.get('id', '')
         username = request.form.get('username', '')
@@ -440,28 +465,54 @@ def search_data(object):
         panel_mapping = {
             "admin": "admin_data",
             "student": "students_data",
-            "teacher": "teacher_data"
+            "teacher": "teacher_data",
+            "department" : "department_data",
+            "subject" : "subject_data",
+            "class" : "class_data",
         }
         if panel in panel_mapping:
-            if id:
-                search_value = f'{panel}_id|{id}'
-            elif username:
-                search_value = f'username|{username}'
-            elif contact_no:
-                search_value = f'contact_no|{contact_no}'
+            print("Panel is in the mapping")
+            if panel in ["admin", "student", "teacher"]:
+                if id:
+                    search_value = f'{panel}_id|{id}'
+                elif username:
+                    search_value = f'username|{username}'
+                elif contact_no:
+                    search_value = f'contact_no|{contact_no}'
+                elif email:
+                    search_value = f'email|{email}'
+                else:
+                    app.logger.debug(f"Search field is invalid, please try with some other field...")
+                    if panel == "class":
+                        return render_template(f'{panel}es.html')
+                    return render_template(f'{panel}s.html')
             else:
-                search_value = f'email|{email}'
+                if id:
+                    search_value = f'{panel}_id|{id}'
+                elif username:
+                    search_value = f'department_name|{username}'
+                elif contact_no and panel in ["class"]:
+                    search_value = f'class_name|{contact_no}'
+                else:
+                    app.logger.debug(f"Search field is invalid, please try with some other field...")
+                    if panel == "class":
+                        return render_template(f'{panel}es.html')
+                    return render_template(f'{panel}s.html')
             coll_name = panel_mapping[panel]
+            print(f"Search value is : {search_value}, coll_name is : {coll_name}")
             search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
         else:
+            print("Panel is not in the mapping")
             app.logger.debug(f"Error in searching data from database")
-        return render_template('search_result.html', search_dict=search_dict)
+        return render_template('search_result.html', panel=panel, search_dict=search_dict)
 
     except Exception as e:
         app.logger.debug(f"Error in searching data from database: {e}")
         print(e)
         flash("Please try again...")
         panel = object
+        if panel == "class":
+            return render_template(f'{panel}es.html')
         return render_template(f'{panel}s.html')
 
 
@@ -514,8 +565,8 @@ def admin_data_list():
         flash("Please try again..")
         return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
 
-@app.route("/admin/add_admin", methods=["GET", "POST"])
-def add_admin():
+@app.route("/admin/add_admin/<op>", methods=["GET", "POST"])
+def add_admin(op):
     """
     In this route we can handling admin register process
     :return: register template
@@ -531,6 +582,17 @@ def add_admin():
         allcountry, allstate, allcountrycode = get_all_country_state_names(app)
 
         if request.method == "POST":
+        #     if op == "update":
+        #         delete_dict = {}
+        #         type = delete_dict.get("type", "else")
+        #         db = client[db_name]
+        #         coll = db[coll_name]
+        #         if type == "student" or type == "teacher" or type == "admin":
+        #             coll.delete_one(delete_dict)
+        #             coll1 = db["login_mapping"]
+        #             coll1.delete_one(delete_dict)
+        #         else:
+        #             coll.delete_one(delete_dict)
             photo_link = request.files["photo_link"]
             first_name = request.form["first_name"]
             last_name = request.form["last_name"]
@@ -554,23 +616,23 @@ def add_admin():
             if username in get_all_username:
                 flash("Admin Username already exits. Please try with different Username")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             #password validation
             if not password_validation(app=app, password=password):
                 flash("Please choose strong password. Add at least 1 special character, number, capitalize latter..")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             # contact number and emergency contact number validation
             get_phone_val = validate_phone_number(app=app, phone_number=contact_no)
@@ -578,42 +640,42 @@ def add_admin():
             if get_phone_val == "invalid number":
                 flash("Please enter correct contact no.")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if get_emergency_phone_val == "invalid number":
                 flash("Please enter correct emergency contact no.")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if 'photo_link' not in request.files:
                 flash('No file part')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if photo_link.filename == '':
                 flash('No image selected for uploading')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if photo_link and allowed_photos(photo_link.filename):
                 filename = secure_filename(username + ".jpg")
@@ -624,23 +686,23 @@ def add_admin():
                 else:
                     flash('This filename already exits')
                     return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                           allstate=allstate, allcountry=allcountry,
-                                           first_name=first_name, last_name=last_name, username=username,
-                                           password=password,
-                                           gender=gender, contact_no=contact_no,
-                                           emergency_contact_no=emergency_contact_no,
-                                           email=email, address=address, countrycode=countrycode, city=city,
-                                           state=state, country=country,
-                                           type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                            allstate=allstate, allcountry=allcountry,
+                                            first_name=first_name, last_name=last_name, username=username,
+                                            password=password,
+                                            gender=gender, contact_no=contact_no,
+                                            emergency_contact_no=emergency_contact_no,
+                                            email=email, address=address, countrycode=countrycode, city=city,
+                                            state=state, country=country,
+                                            type=type, photo_link=photo_main_link, admin_id=admin_id)
             else:
                 flash('This file format is not supported.....')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                       allstate=allstate, allcountry=allcountry,
-                                       first_name=first_name, last_name=last_name, username=username, password=password,
-                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                       country=country,
-                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                        allstate=allstate, allcountry=allcountry,
+                                        first_name=first_name, last_name=last_name, username=username, password=password,
+                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                        country=country,
+                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             #admin-id validation
             all_admin_data = find_spec_data(app, db, "login_mapping", {"type": "admin"})
@@ -676,10 +738,10 @@ def add_admin():
             data_added(app, db, "admin_data", register_dict)
             data_added(app, db, "login_mapping", admin_mapping_dict)
             mail.send_message("[Rylee] Account Credentials",
-                              sender="harshitgadhiya8980@gmail.com",
-                              recipients=[email],
-                              body=f"Hello There,\nWe hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an 'Account' has been processed successfully and your account has been opened.\n Please check with the below credential.\nAdminID: {unique_admin_id}\nUsername: {username}\nif you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com\nThank you for your cooperation.\nBest regards,\nCodescatter",
-                              html=f'<p>Hello There,</p><p>We hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an "Account" has been processed successfully and your account has been opened.</p><p>Please check with the below credential.</p><p><h2><b>AdminID - {unique_admin_id}</b></h2></p><p><h2><b>Username - {username}</b></h2></p><p>if you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com</p><p>Thank you for your cooperation.</p><p>Best regards,<br>Codescatter</p>')
+                                sender="harshitgadhiya8980@gmail.com",
+                                recipients=[email],
+                                body=f"Hello There,\nWe hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an 'Account' has been processed successfully and your account has been opened.\n Please check with the below credential.\nAdminID: {unique_admin_id}\nUsername: {username}\nif you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com\nThank you for your cooperation.\nBest regards,\nCodescatter",
+                                html=f'<p>Hello There,</p><p>We hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an "Account" has been processed successfully and your account has been opened.</p><p>Please check with the below credential.</p><p><h2><b>AdminID - {unique_admin_id}</b></h2></p><p><h2><b>Username - {username}</b></h2></p><p>if you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com</p><p>Thank you for your cooperation.</p><p>Best regards,<br>Codescatter</p>')
             flash("Data Added Successfully")
             return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
         else:
