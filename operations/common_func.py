@@ -374,26 +374,38 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
         db = client[db_name]
         coll = db[coll_name]
         key, value = search_value.split("|")
-        print(f"Key is {key} and value is {value}")
+        if key == "class_id":
+            key = "student_id"
+        print(f"key: {key}, value: {value}")
         data_type_converters = {
             "admin_data": {
                 "admin_id": int,
             },
-            "students_data": {
-                "student_id": int,
-            },
-            "default": {
+            "teacher_data": {
                 "teacher_id": int,
             },
+            "department_data": {
+                "department_id": int,
+            },
+            "subject_data": {
+                "subject_id": int,
+            },
+            "default": {
+                "student_id": int,
+            }
         }
 
         converter = data_type_converters.get(coll_name, data_type_converters["default"])
+        print(f"converter: {converter}")
         search_value = converter.get(key, str)(value.strip())
+        print(f"search_value: {search_value} and type: {type(search_value)}")
 
         result = coll.find_one({key:search_value})
+        print(f"result: {result}")
         return result
 
     except Exception as e:
+        print(f"Exception in searching panel data: {e}")
         app.logger.debug(f"Error in search data from database: {e}")
 
 def get_all_country_state_names(app):
