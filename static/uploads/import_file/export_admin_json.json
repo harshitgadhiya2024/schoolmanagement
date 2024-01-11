@@ -1,0 +1,21 @@
+[
+  {
+    "photo_link": "static/uploads/profiles/hgadhiya89802234.jpg",
+    "admin_id": 1122830980946353,
+    "username": "hgadhiya89802234",
+    "first_name": "Harshit",
+    "last_name": "gadhiya",
+    "password": "Har@#0401",
+    "gender": "Female",
+    "contact_no": "+1 8927393723",
+    "emergency_contact_no": "+1 9601406607",
+    "email": "harshitgadhiya8980@gmail.com",
+    "address": "ahmedabad",
+    "city": "ahmedabad",
+    "state": "Noord-Holland",
+    "country": "Aruba",
+    "type": "admin",
+    "inserted_on": "01-08-2024 20:28:24",
+    "updated_on": "01-08-2024 20:28:24"
+  }
+]

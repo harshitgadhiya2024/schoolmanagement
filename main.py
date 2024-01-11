@@ -10,7 +10,7 @@ import json
 from constant import constant_data
 from operations.mongo_connection import (mongo_connect, data_added, find_all_data, find_spec_data, update_mongo_data,
                                          delete_data)
-from operations.common_func import (search_panel_data, delete_all_panel_data, get_unique_subject_id, export_panel_data, delete_panel_data, get_unique_department_id,
+from operations.common_func import (file_check, import_data_into_database, search_panel_data, delete_all_panel_data, get_unique_subject_id, export_panel_data, delete_panel_data, get_unique_department_id,
                                     get_unique_admin_id, get_admin_data, validate_phone_number, password_validation,
                                     logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id,
                                     get_unique_teacher_id, get_all_country_state_names)
@@ -36,6 +36,9 @@ app.config['MAIL_PASSWORD'] = 'zuvgjolhsfgeyfjj'
 app.config['MAIL_USE_SSL'] = True
 app.config["PROFILE_UPLOAD_FOLDER"] = 'static/uploads/profiles/'
 app.config["EXPORT_UPLOAD_FOLDER"] = 'static/uploads/export_file/'
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024
+app.config["IMPORT_UPLOAD_FOLDER"] = 'static/uploads/import_file/'
+app.config['REJECTED_DATA_UPLOAD_FOLDER'] = 'static/uploads/rejected_data/'
 
 # handling our application secure type like http or https
 secure_type = constant_data["secure_type"]
@@ -389,6 +392,82 @@ def export_data(object):
         app.logger.debug(f"Error in export data from database: {e}")
         flash("Please try again...")
         return redirect(url_for('export_data', _external=True, _scheme=secure_type))
+
+@app.route("/admin/import_data/<object>", methods=["GET", "POST"])
+def import_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        print("In import data")
+        print(f"object: {object}")
+        panel_mapping = ['admin_data', 'students_data', 'teacher_data', 'department_data', 'subject_data', 'class_data']
+        print(f"Panel mapping: {panel_mapping}")
+        db = client["college_management"]
+        collection_names = db.list_collection_names()
+        collection_names.remove("constant_details")
+        secondary_collection_array = list(set(collection_names) - set(panel_mapping))
+        print(f"Sec col array : {secondary_collection_array}")
+        if object == "class":
+            check_id = "student_id"
+        check_id = f"{object}_id"
+        print(f"Check id: {check_id}")
+        ## Checking if request method is POST
+        if request.method == "POST":
+            ## Getting file from request
+            file = request.files["file"]
+            ## Checking if file is selected
+            if file.filename != "":
+                print(f"File name: {file.filename}")
+                ## Securing file and getting file extension
+                file_name = secure_filename(file.filename)
+                if not os.path.isdir(app.config['IMPORT_UPLOAD_FOLDER']):
+                    os.makedirs(app.config['IMPORT_UPLOAD_FOLDER'], exist_ok=True)
+                if not os.path.exists(app.config['REJECTED_DATA_UPLOAD_FOLDER']):
+                    os.makedirs(app.config['REJECTED_DATA_UPLOAD_FOLDER'], exist_ok=True)
+                file_path = os.path.join(app.config['IMPORT_UPLOAD_FOLDER'], file_name)
+                file.save(file_path)
+                file_extension = os.path.splitext(file_name)[1]
+                file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
+                print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
+                query_list = []
+                for json_group in reader_json:
+                    query = {}
+                    print(f"Json group: {json_group}")
+                    if check_id in json_group:
+                        print("In here")
+                        query[check_id] = int(json_group[check_id])
+                        query_list.append(query)
+                if file_check_value == True:
+                    result_value, rejected_data = import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json, secondary_collection_array)
+                    if result_value:
+                        print("Appended data to database")
+                        flash("Data imported successfully")
+                    else:
+                        flash("Please check the data, for any missing or duplicate data")
+                    ## Save this rejected data into the path app.config["REJECTED_DATA_UPLOAD_FOLDER"]
+                    if len(rejected_data) > 0:
+                        rejected_data_path = os.path.join(app.config['REJECTED_DATA_UPLOAD_FOLDER'], file_name)
+                        with open(rejected_data_path, 'w') as f:
+                            json.dump(rejected_data, f)
+                        print(f"Rejected data saved at: {rejected_data_path}")
+                else:
+                    flash("Please check the file type")
+            else:
+                flash("No file selected, please select a file")
+            if object == "class":
+                return render_template(f'{object}es.html')
+            return render_template(f'{object}s.html')
+
+    except Exception as e:
+        app.logger.debug(f"Error in export data from database: {e}")
+        print(f"Error in export data from database: {e}")
+        flash("Please try again...")
+        object
+        if object == "class":
+            return render_template(f'{object}es.html')
+        return render_template(f'{object}s.html')
 
 @app.route("/admin/edit_data/<object>", methods=["GET", "POST"])
 def edit_data(object):

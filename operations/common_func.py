@@ -11,6 +11,8 @@ import pandas as pd
 import json
 import os
 import pycountry
+import csv
+import openpyxl
 
 def logger_con(app):
     """
@@ -422,3 +424,128 @@ def get_all_country_state_names(app):
 
     except Exception as e:
         app.logger.debug(f"Error in get country, state or city from database: {e}")
+
+def import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json, secondary_collection_array={}):
+    try:
+        if check_id in field_names:
+            for collection in panel_mapping:
+                print(f"Collection: {collection}")
+                first_record = db[collection].find_one({})
+                print(f"First record: {first_record}")
+                # Get the keys of the first record
+                default_keys = list(first_record.keys())
+                print(f"Keys: {default_keys}")
+                remove_keys = ["_id", "inserted_on", "updated_on", "photo_link"]
+                for remove_key in remove_keys:
+                    if remove_key in default_keys:
+                        default_keys.remove(remove_key)
+                print("Keys in json format updated: ", reader_json)
+                print("Updated keys: ", default_keys)
+                for query, reader_coll in zip(query_list, reader_json):
+                    print(f"Collection: {collection}, query: {query}")
+                    ## Check if this check_id is present in collection
+                    check_data = db[collection].count_documents(query) > 0
+                    print(f"Check data: {check_data}")
+                    rejected_data = []
+                    if not check_data and check_id in default_keys:
+                        ## Save data in collection
+                        print(f"Check id is not present in {collection}")
+                        ## Convert value of id into int
+                        reader_coll[check_id] = int(reader_coll[check_id])
+                        db[collection].insert_one(reader_coll)
+                    else:
+                        print(f"Check id is present in collection or it is not a correct document {collection}")
+                        print(f"Data is rejected : {reader_coll}")
+                        if "_id" in reader_coll:
+                            del reader_coll["_id"]
+                        rejected_data.append(reader_coll)
+            return True, rejected_data
+        else:
+            app.logger.debug(f"Id is not present in field names")
+            print(f"Id is not present in field names")
+            return False, []
+    except Exception as e:
+        app.logger.debug(f"Error in import data into database: {e}")
+        print(f"Error in import data into database: {e}")
+        return None, []
+    
+def file_check(app, file_extension, file_path):
+    try:
+        if (file_extension == ".csv" or file_extension == ".xlsx" or file_extension == ".json"):
+            ## Check if this check_id is present in this file
+            if file_extension == ".csv":
+                with open(file_path) as f:
+                    reader = csv.DictReader(f)
+                    field_names = reader.fieldnames
+                    print(f"Field names: {field_names}")
+                    rows = list(reader)
+                    reader_json = json.loads(json.dumps(rows))
+                    print(f"Type of reader_json: {type(reader_json)}")
+                    print("Data in json format: ", reader_json)
+            elif file_extension == ".xlsx":
+                wb = openpyxl.load_workbook(file_path)
+                sheet = wb.active
+                field_names = [cell.value for cell in sheet[1]]
+                print(f"Field names: {field_names}")
+                # Convert the DataFrame to JSON
+                # Create an empty list to store the JSON data
+                json_data = []
+
+                # Iterate over the rows in the sheet
+                for row in sheet.iter_rows(values_only=True):
+                    # Create a dictionary for each row
+                    row_dict = {}
+                    for col_index, cell_value in enumerate(row):
+                        # Use the header row as keys for each dictionary entry
+                        header = sheet.cell(row=1, column=col_index + 1).value
+                        row_dict[header] = cell_value
+                    # Append the row dictionary to the json_data list
+                    json_data.append(row_dict)
+
+                # Convert the list of dictionaries to JSON
+                reader_json = json.load(json.dumps(json_data))
+                print(f"Type of reader_json: {type(reader_json)}")
+                # Print the JSON data
+                print(f"json_string: {reader_json}")
+            else:
+                with open(file_path) as f:
+                    reader_json = json.load(f)
+                field_names = list(reader_json[0].keys())
+                print(f"Field names: {field_names}")
+                print(f"Data is in json format: {reader_json}")
+            remove_key_bool = remove_unused_keys(app, reader_json, field_names)
+            if remove_key_bool:
+                return True, field_names, reader_json
+            else:
+                print("Unable to remove unused keys from json file")
+                app.logger.debug("Unable to remove unused keys from json file")
+                return False, {}, {}
+        else:
+            print("Please select correct file format (.csv, .xlsx or .json)")
+            app.logger.debug("Please select correct file format (.csv, .xlsx or .json)")
+            return False, {}, {}
+    except Exception as e:
+        app.logger.debug(f"Error in file check: {e}")
+        return None, {}, {}
+    
+def remove_unused_keys(app, reader_json, field_names):
+    try:
+        remove_keys = ["_id", "updated_on", "photo_link"]
+        for remove_key in remove_keys:
+            if remove_key in field_names:
+                print("Removing key in reader json: ", remove_key)  
+                for reader_dict in reader_json:                          
+                    if remove_key == "updated_on":
+                        reader_dict[remove_key] = get_timestamp(app)
+                        print("Updated timestamp")
+                    elif remove_key == "photo_link":
+                        reader_dict[remove_key] = "NA"
+                    else:
+                        del reader_dict[remove_key]
+                        print("Removed key in reader json")
+        print(f"Updated json : {reader_json}")
+        return True, reader_json
+    except Exception as e:
+        print(f"Error in remove unused keys: {e}")
+        app.logger.debug(f"Error in remove unused keys: {e}")
+        return False, reader_json

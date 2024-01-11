@@ -26,4 +26,4 @@ tzdata==2023.4
 urllib3==2.1.0
 Werkzeug==3.0.1
 zipp==3.17.0
-pycountry==23.12.11
+pycountry==23.12.11cl
