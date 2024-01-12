@@ -14,6 +14,8 @@ import pycountry
 import csv
 import openpyxl
 
+from operations.mongo_connection import data_added
+
 
 def logger_con(app):
     """
@@ -335,15 +337,19 @@ def delete_all_panel_data(app, client, db_name, coll_name, panel):
     try:
         db = client[db_name]
         coll = db[coll_name]
-        if panel == "student" or panel == "teacher" or panel == "admin":
+        count = coll.count_documents({})
+        print(f"count: {count}")
+        if (panel == "student" or panel == "teacher" or panel == "admin") and count > 0:
             coll.delete_many({})
             coll1 = db["login_mapping"]
             coll1.delete_many({"type": panel})
+            return True
         else:
             coll.delete_many({})
-        return "all data deleted"
+            return False
 
     except Exception as e:
+        print(f"Error in delete data from database: {e}")
         app.logger.debug(f"Error in delete data from database: {e}")
 
 
@@ -442,13 +448,16 @@ def get_all_country_state_names(app):
         app.logger.debug(f"Error in get country, state or city from database: {e}")
 
 
+
+
+
 def import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json,
                               secondary_collection_array={}):
     try:
         if check_id in field_names:
             for collection in panel_mapping:
                 print(f"Collection: {collection}")
-                count, default_keys = check_for_files(collection, db, reader_json)
+                count, default_keys = check_for_files(app, collection, db, reader_json)
                 for query, reader_coll in zip(query_list, reader_json):
                     print(f"Collection: {collection}, query: {query}")
                     updated_reader_coll = {}
