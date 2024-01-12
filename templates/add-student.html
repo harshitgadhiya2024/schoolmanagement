@@ -166,6 +166,13 @@
 								<li><a href="/admin/classes_data">Classes List</a></li>
 							</ul>
 						</li>
+						<li class="submenu">
+							<a href="#"><i class="fas fa-book-reader"></i> <span> Attendance</span> <span
+									class="menu-arrow"></span></a>
+							<ul>
+								<li><a href="/admin/attendance_data">Attendance List</a></li>
+							</ul>
+						</li>
 					</ul>
 				</div>
 			</div>
@@ -232,7 +239,7 @@
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
 												<label>Password <span class="login-danger">*</span></label>
-												<input class="form-control pass-input" value="{{password}}" name="password" type="password" required>
+												<input class="form-control pass-input" value="{{password}}" name="password" type="text" required>
 												<span class="profile-views feather-eye toggle-password"></span>
 											</div>
 										</div>
@@ -267,14 +274,14 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Phone-Number <span class="login-danger">*</span></label>
+												<label>Phone-Number  <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{contact_no}}" name="contact_no"
 													type="number" placeholder="Enter Phone Number" required>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Emergency Phone-Number <span class="login-danger">*</span></label>
+												<label>Emergency Phone-Number  <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{emergency_contact_no}}"
 													name="emer_contact_no" type="number"
 													placeholder="Enter Emergency Phone Number" required>
@@ -371,7 +378,7 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group students-up-files">
-												<label>Upload Admin Photo (150px X 150px)</label>
+												<label>Upload Student Photo (150px X 150px)</label>
 												<div class="uplod">
 													<label class="file-upload image-upbtn mb-0">
 														Choose File <input type="file" name="photo_link" autocomplete="off" required>

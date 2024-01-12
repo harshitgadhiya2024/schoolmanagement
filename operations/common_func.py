@@ -29,7 +29,6 @@ def logger_con(app):
     except Exception as e:
         app.logger.error(f"Error when connecting logger: {e}")
 
-
 def get_timestamp(app):
     """
     Get current time
@@ -46,7 +45,6 @@ def get_timestamp(app):
     except Exception as e:
         app.logger.debug(f"Error in get timestamp: {e}")
 
-
 def get_error_msg(app, e):
     """
     Get error response with formatting
@@ -57,11 +55,11 @@ def get_error_msg(app, e):
     """
     try:
         response_data_msg = {
-            "data": "null",
-            "message": f"Server Not Responding Error {e}",
-            "status": "FORBIDDEN",
-            "statusCode": 403,
-            "timestamp": get_timestamp(app)
+          "data": "null",
+          "message": f"Server Not Responding Error {e}",
+          "status": "FORBIDDEN",
+          "statusCode": 403,
+          "timestamp": get_timestamp(app)
         }
 
         return response_data_msg
@@ -69,8 +67,7 @@ def get_error_msg(app, e):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
-
-def get_response_msg(app, status, statuscode, message, data):
+def get_response_msg(app,status, statuscode, message, data):
     """
     Get success response with formatting
 
@@ -96,7 +93,6 @@ def get_response_msg(app, status, statuscode, message, data):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
-
 def get_unique_student_id(app, all_student_id):
     """
     Get unique student id
@@ -117,7 +113,6 @@ def get_unique_student_id(app, all_student_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique student id: {e}")
 
-
 def get_unique_department_id(app, all_deparment_id):
     """
     Get unique department id
@@ -137,7 +132,6 @@ def get_unique_department_id(app, all_deparment_id):
 
     except Exception as e:
         app.logger.debug(f"Error in get unique department id: {e}")
-
 
 def get_unique_subject_id(app, all_subject_id):
     """
@@ -180,7 +174,6 @@ def get_unique_teacher_id(app, all_teacher_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique teacher: {e}")
 
-
 def get_unique_admin_id(app, all_admin_id):
     """
     Get unique teacher id
@@ -201,7 +194,6 @@ def get_unique_admin_id(app, all_admin_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique admin: {e}")
 
-
 def password_validation(app, password):
     """
     Check password is validate or not
@@ -220,12 +212,12 @@ def password_validation(app, password):
                 capital = True
             try:
                 char = int(char)
-                number = True
+                number=True
             except:
                 pass
 
             if char in special_char_list:
-                special_char = True
+                special_char=True
 
         if capital and number and special_char:
             matching = True
@@ -236,7 +228,6 @@ def password_validation(app, password):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
-
 
 def validate_phone_number(app, phone_number):
     """
@@ -260,7 +251,6 @@ def validate_phone_number(app, phone_number):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
-
 
 def get_admin_data(app, client, db_name, coll_name):
     """
@@ -291,7 +281,6 @@ def get_admin_data(app, client, db_name, coll_name):
     except Exception as e:
         app.logger.debug(f"Error in get data from admin database: {e}")
 
-
 def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     """
     delete data from database
@@ -320,7 +309,6 @@ def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
 
-
 def delete_all_panel_data(app, client, db_name, coll_name, panel):
     """
     delete data from database
@@ -346,7 +334,6 @@ def delete_all_panel_data(app, client, db_name, coll_name, panel):
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
 
-
 def export_panel_data(app, database_data, panel, type):
     """
     export data for different format like csv, excel and csv
@@ -358,11 +345,11 @@ def export_panel_data(app, database_data, panel, type):
     """
 
     try:
-        if type == "excel":
+        if type=="excel":
             output_path = os.path.join(app.config["EXPORT_UPLOAD_FOLDER"], f"export_{panel}_excel.xlsx")
             df = pd.DataFrame(database_data)
             df.to_excel(output_path, index=False)
-        elif type == "csv":
+        elif type=="csv":
             output_path = os.path.join(app.config["EXPORT_UPLOAD_FOLDER"], f"export_{panel}_csv.csv")
             df = pd.DataFrame(database_data)
             df.to_csv(output_path, index=False)
@@ -375,7 +362,6 @@ def export_panel_data(app, database_data, panel, type):
 
     except Exception as e:
         app.logger.debug(f"Error in export data from database: {e}")
-
 
 def search_panel_data(app, client, db_name, search_value, coll_name):
     """
@@ -424,7 +410,6 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
     except Exception as e:
         print(f"Exception in searching panel data: {e}")
         app.logger.debug(f"Error in search data from database: {e}")
-
 
 def get_all_country_state_names(app):
     try:
