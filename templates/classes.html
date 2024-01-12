@@ -190,24 +190,6 @@
 						</div>
 					</div>
 					<!-- /Page Header -->
-					
-					<!-- <div class="student-group-form">
-						<form action="/search_data/classes" method="POST" enctype="multipart/form-data">
-							<div class="row">
-								<div class="col-lg-10 col-md-6">
-									<div class="form-group">
-										<input type="number" name="student_id" class="form-control"
-											placeholder="Search by Student ID ...">
-									</div>
-								</div>
-								<div class="col-lg-2">
-									<div class="search-student-btn">
-										<button type="btn" class="btn btn-primary">Search</button>
-									</div>
-								</div>
-							</div>
-						</form>
-					</div> -->
 
 					<!-- Search Header -->
 					<div class="student-group-form">
@@ -231,9 +213,18 @@
 												<h3 class="page-title">Classes</h3>
 											</div>
 											<div class="col-auto text-end float-end ms-auto download-grp">
-												<a href="/admin/deleteall/classes" class="btn btn-outline-primary me-2"><i class="fa-solid fa-trash"></i>  Delete All</a>
-												<!-- <a href="#" class="btn btn-outline-primary me-2"><i
-														class="fas fa-download"></i> Download</a> -->
+												<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
+													data-bs-toggle="dropdown" aria-expanded="false">
+													<i class="fa fa-download"></i> Import
+												</button>
+												<ul class="dropdown-menu">
+													<form action ="/admin/import_data/class" method = "post" enctype="multipart/form-data">
+														<div id="browsebutton"><input class="form-control" type="file" name="file" id="formFile"></div>
+														<div style="display: flex; justify-content: center; align-items: center;">
+															<input class="form-control btn-primary" type="submit" value="Upload" style="width: 75%;">
+														</div>
+													</form>
+												</ul>
 												<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
 													data-bs-toggle="dropdown" aria-expanded="false">
 													<i class="fas fa-download"></i> Export

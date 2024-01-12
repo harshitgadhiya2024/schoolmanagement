@@ -2624,6 +2624,12 @@ footer p {
 	align-items: center;
 }
 
+.page-header #browsebutton	{
+	padding: 0.5rem 1rem 0.5rem 1rem;
+	align-items: center;
+}
+
+
 /*-----------------
 	12. Login
 -----------------------*/

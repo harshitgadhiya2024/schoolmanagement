@@ -11,6 +11,9 @@ import pandas as pd
 import json
 import os
 import pycountry
+import csv
+import openpyxl
+
 
 def logger_con(app):
     """
@@ -25,6 +28,7 @@ def logger_con(app):
 
     except Exception as e:
         app.logger.error(f"Error when connecting logger: {e}")
+
 
 def get_timestamp(app):
     """
@@ -42,6 +46,7 @@ def get_timestamp(app):
     except Exception as e:
         app.logger.debug(f"Error in get timestamp: {e}")
 
+
 def get_error_msg(app, e):
     """
     Get error response with formatting
@@ -52,11 +57,11 @@ def get_error_msg(app, e):
     """
     try:
         response_data_msg = {
-          "data": "null",
-          "message": f"Server Not Responding Error {e}",
-          "status": "FORBIDDEN",
-          "statusCode": 403,
-          "timestamp": get_timestamp(app)
+            "data": "null",
+            "message": f"Server Not Responding Error {e}",
+            "status": "FORBIDDEN",
+            "statusCode": 403,
+            "timestamp": get_timestamp(app)
         }
 
         return response_data_msg
@@ -64,7 +69,8 @@ def get_error_msg(app, e):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
-def get_response_msg(app,status, statuscode, message, data):
+
+def get_response_msg(app, status, statuscode, message, data):
     """
     Get success response with formatting
 
@@ -90,6 +96,7 @@ def get_response_msg(app,status, statuscode, message, data):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
+
 def get_unique_student_id(app, all_student_id):
     """
     Get unique student id
@@ -110,6 +117,7 @@ def get_unique_student_id(app, all_student_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique student id: {e}")
 
+
 def get_unique_department_id(app, all_deparment_id):
     """
     Get unique department id
@@ -129,6 +137,7 @@ def get_unique_department_id(app, all_deparment_id):
 
     except Exception as e:
         app.logger.debug(f"Error in get unique department id: {e}")
+
 
 def get_unique_subject_id(app, all_subject_id):
     """
@@ -171,6 +180,7 @@ def get_unique_teacher_id(app, all_teacher_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique teacher: {e}")
 
+
 def get_unique_admin_id(app, all_admin_id):
     """
     Get unique teacher id
@@ -191,6 +201,7 @@ def get_unique_admin_id(app, all_admin_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique admin: {e}")
 
+
 def password_validation(app, password):
     """
     Check password is validate or not
@@ -209,12 +220,12 @@ def password_validation(app, password):
                 capital = True
             try:
                 char = int(char)
-                number=True
+                number = True
             except:
                 pass
 
             if char in special_char_list:
-                special_char=True
+                special_char = True
 
         if capital and number and special_char:
             matching = True
@@ -225,6 +236,7 @@ def password_validation(app, password):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
+
 
 def validate_phone_number(app, phone_number):
     """
@@ -248,6 +260,7 @@ def validate_phone_number(app, phone_number):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
+
 
 def get_admin_data(app, client, db_name, coll_name):
     """
@@ -278,6 +291,7 @@ def get_admin_data(app, client, db_name, coll_name):
     except Exception as e:
         app.logger.debug(f"Error in get data from admin database: {e}")
 
+
 def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     """
     delete data from database
@@ -306,6 +320,7 @@ def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
 
+
 def delete_all_panel_data(app, client, db_name, coll_name, panel):
     """
     delete data from database
@@ -331,6 +346,7 @@ def delete_all_panel_data(app, client, db_name, coll_name, panel):
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
 
+
 def export_panel_data(app, database_data, panel, type):
     """
     export data for different format like csv, excel and csv
@@ -342,11 +358,11 @@ def export_panel_data(app, database_data, panel, type):
     """
 
     try:
-        if type=="excel":
+        if type == "excel":
             output_path = os.path.join(app.config["EXPORT_UPLOAD_FOLDER"], f"export_{panel}_excel.xlsx")
             df = pd.DataFrame(database_data)
             df.to_excel(output_path, index=False)
-        elif type=="csv":
+        elif type == "csv":
             output_path = os.path.join(app.config["EXPORT_UPLOAD_FOLDER"], f"export_{panel}_csv.csv")
             df = pd.DataFrame(database_data)
             df.to_csv(output_path, index=False)
@@ -359,6 +375,7 @@ def export_panel_data(app, database_data, panel, type):
 
     except Exception as e:
         app.logger.debug(f"Error in export data from database: {e}")
+
 
 def search_panel_data(app, client, db_name, search_value, coll_name):
     """
@@ -400,13 +417,14 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
         search_value = converter.get(key, str)(value.strip())
         print(f"search_value: {search_value} and type: {type(search_value)}")
 
-        result = coll.find_one({key:search_value})
+        result = coll.find_one({key: search_value})
         print(f"result: {result}")
         return result
 
     except Exception as e:
         print(f"Exception in searching panel data: {e}")
         app.logger.debug(f"Error in search data from database: {e}")
+
 
 def get_all_country_state_names(app):
     try:
@@ -422,3 +440,203 @@ def get_all_country_state_names(app):
 
     except Exception as e:
         app.logger.debug(f"Error in get country, state or city from database: {e}")
+
+
+def import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json,
+                              secondary_collection_array={}):
+    try:
+        if check_id in field_names:
+            for collection in panel_mapping:
+                print(f"Collection: {collection}")
+                count, default_keys = check_for_files(collection, db, reader_json)
+                for query, reader_coll in zip(query_list, reader_json):
+                    print(f"Collection: {collection}, query: {query}")
+                    updated_reader_coll = {}
+                    if len(default_keys) != 0:
+                        for def_key in default_keys:
+                            if def_key in reader_coll:
+                                updated_reader_coll[def_key] = reader_coll[def_key]
+                        print(f"Updated reader coll: {updated_reader_coll}")
+                    ## Check if this check_id is present in collection
+                    check_data = db[collection].count_documents(query) > 0
+                    print(f"Check data: {check_data}")
+                    rejected_data = []
+                    if not check_data and (count == 0 or check_id in default_keys):
+                        ## Save data in collection
+                        print(f"Check id is not present in {collection}")
+                        ## Convert value of id into int
+                        updated_reader_coll[check_id] = int(updated_reader_coll[check_id])
+                    else:
+                        print(
+                            f"Check id is present in collection or it is not a correct collection for this Id:"
+                            f" {collection}")
+                        print(f"Data is rejected : {updated_reader_coll}")
+                        if "_id" in updated_reader_coll:
+                            del updated_reader_coll["_id"]
+                        rejected_data.append(updated_reader_coll)
+                    result = update_collection(app, collection, db, updated_reader_coll)
+            return True, rejected_data
+        else:
+            app.logger.debug(f"Id is not present in field names")
+            print(f"Id is not present in field names")
+            return False, []
+    except Exception as e:
+        app.logger.debug(f"Error in import data into database: {e}")
+        print(f"Error in import data into database: {e}")
+        return None, []
+
+
+def file_check(app, file_extension, file_path):
+    try:
+        if file_extension == ".csv" or file_extension == ".xlsx" or file_extension == ".json":
+            ## Check if this check_id is present in this file
+            if file_extension == ".csv":
+                with open(file_path) as f:
+                    reader = csv.DictReader(f)
+                    field_names = reader.fieldnames
+                    print(f"Field names: {field_names}")
+                    rows = list(reader)
+                    reader_json = json.loads(json.dumps(rows))
+                    print(f"Type of reader_json: {type(reader_json)}")
+                    print("Data in json format: ", reader_json)
+            elif file_extension == ".xlsx":
+                wb = openpyxl.load_workbook(file_path)
+                sheet = wb.active
+                field_names = [cell.value for cell in sheet[1]]
+                print(f"Field names: {field_names}")
+                # Convert the DataFrame to JSON
+                # Create an empty list to store the JSON data
+                json_data = []
+
+                # Iterate over the rows in the sheet
+                for row in sheet.iter_rows(values_only=True):
+                    # Create a dictionary for each row
+                    row_dict = {}
+                    for col_index, cell_value in enumerate(row):
+                        # Use the header row as keys for each dictionary entry
+                        header = sheet.cell(row=1, column=col_index + 1).value
+                        row_dict[header] = cell_value
+                    # Append the row dictionary to the json_data list
+                    json_data.append(row_dict)
+
+                # Convert the list of dictionaries to JSON
+                reader_json = json.load(json.dumps(json_data))
+                print(f"Type of reader_json: {type(reader_json)}")
+                # Print the JSON data
+                print(f"json_string: {reader_json}")
+            else:
+                with open(file_path) as f:
+                    reader_json = json.load(f)
+                field_names = list(reader_json[0].keys())
+                print(f"Field names: {field_names}")
+                print(f"Data is in json format: {reader_json}")
+            remove_key_bool, reader_json = remove_unused_keys(app, reader_json, field_names)
+            if remove_key_bool:
+                return True, field_names, reader_json
+            else:
+                print("Unable to remove unused keys from json file")
+                app.logger.debug("Unable to remove unused keys from json file")
+                return False, {}, {}
+        else:
+            print("Please select correct file format (.csv, .xlsx or .json)")
+            app.logger.debug("Please select correct file format (.csv, .xlsx or .json)")
+            return False, {}, {}
+    except Exception as e:
+        app.logger.debug(f"Error in file check: {e}")
+        return None, {}, {}
+
+
+def remove_unused_keys(app, reader_json, field_names):
+    try:
+        remove_keys = ["_id", "updated_on", "photo_link"]
+        for remove_key in remove_keys:
+            if remove_key in field_names:
+                print("Removing key in reader json: ", remove_key)
+                for reader_dict in reader_json:
+                    if remove_key == "updated_on":
+                        reader_dict[remove_key] = get_timestamp(app)
+                        print("Updated timestamp")
+                    elif remove_key == "photo_link":
+                        reader_dict[remove_key] = "NA"
+                    else:
+                        del reader_dict[remove_key]
+                        print("Removed key in reader json")
+        print(f"Updated json : {reader_json}")
+        return True, reader_json
+    except Exception as e:
+        print(f"Error in remove unused keys: {e}")
+        app.logger.debug(f"Error in remove unused keys: {e}")
+        return False, reader_json
+
+
+def check_dirs(app, file_name, file):
+    try:
+        if not os.path.isdir(app.config['IMPORT_UPLOAD_FOLDER']):
+            os.makedirs(app.config['IMPORT_UPLOAD_FOLDER'], exist_ok=True)
+        if not os.path.exists(app.config['REJECTED_DATA_UPLOAD_FOLDER']):
+            os.makedirs(app.config['REJECTED_DATA_UPLOAD_FOLDER'], exist_ok=True)
+        file_path = os.path.join(app.config['IMPORT_UPLOAD_FOLDER'], file_name)
+        file.save(file_path)
+        file_extension = os.path.splitext(file_name)[1]
+        return file_extension, file_path
+    except Exception as e:
+        print(f"Error in creating dirs: {e}")
+        app.logger.debug(f"Error in creating dirs: {e}")
+        return None, None
+
+
+def create_query_list(app, check_id, reader_json):
+    try:
+        query_list = []
+        for json_group in reader_json:
+            query = {}
+            print(f"Json group: {json_group}")
+            if check_id in json_group:
+                print("In here")
+                query[check_id] = int(json_group[check_id])
+                query_list.append(query)
+        return query_list
+    except Exception as e:
+        print(f"Error in create query list: {e}")
+        app.logger.debug(f"Error in create query list: {e}")
+        return []
+
+
+def update_collection(app, collection, db, updated_reader_coll):
+    try:
+        result = db[collection].insert_one(updated_reader_coll)
+        if result:
+            app.logger.debug(f"Data inserted into collection: {collection}")
+            return True
+    except Exception as e:
+        app.logger.debug(f"Error in update collection: {e}")
+        print(f"Error in update collection: {e}")
+        return False
+
+
+def check_for_files(app, collection, db, reader_json):
+    try:
+        count = db[collection].count_documents({})
+        default_keys = []
+        if count > 0:
+            print('The collection has documents.')
+            first_record = db[collection].find_one({})
+            print(f"First record: {first_record}")
+            # Get the keys of the first record
+            default_keys = list(first_record.keys())
+            print(f"Keys: {default_keys}")
+            remove_keys = ["_id", "inserted_on", "updated_on", "photo_link"]
+            for remove_key in remove_keys:
+                if remove_key in default_keys:
+                    default_keys.remove(remove_key)
+            print("Keys in json format updated: ", reader_json)
+            print("Updated keys: ", default_keys)
+            app.logger.debug("Documents present in collection")
+        else:
+            print('The collection is empty.')
+            app.logger.debug("Documents not present in collection")
+        return count, default_keys
+    except Exception as e:
+        app.logger.debug(f"Error in check for files: {e}")
+        print(f"Error in check for files: {e}")
+        return 0, []

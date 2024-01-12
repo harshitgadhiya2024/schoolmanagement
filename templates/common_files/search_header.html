@@ -1,78 +1,158 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-</head>
-<body>
-    <form id="search" method="POST" enctype="multipart/form-data">
-        <div class="row row-cols-7">
-            <div class="col-sm-auto" style="padding: 0.75rem 1rem 0 1rem;">
-                <div class="form-group">
-                    <p>Search By :</p>
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <input type="text" inputmode="numeric" name="id" class="form-control" id="id"
-                        placeholder="ID ...">
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <input type="text" name="username" class="form-control" id="username"
-                        placeholder="Username ...">
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <input type="text" name="contact_no" class="form-control" id="contact_no"
-                        placeholder="Contact No ...">
-                </div>
-            </div>
-            <div class="col">
-                <div class="form-group">
-                    <input type="email" name="email" class="form-control" id="email"
-                        placeholder="Email ...">
-                </div>
-            </div>
-            <div class="col">
-                <div class="search-student-btn">
-                    <button type="btn" class="btn btn-primary">Search</button>
-                </div>
-            </div>
-            <div class="col" style="padding-left: 0.25rem">
-                <div class="search-student-btn">
-                    <a href="/admin/deleteall/admin" class="btn btn-primary"><i class="fa-solid fa-trash"></i>  Delete All</a>
-                </div>
+<form id="search" method="POST" enctype="multipart/form-data">
+    <div class="row row-cols-7">
+        <div class="col-sm-auto" style="padding: 0.75rem 1rem 0 1rem;">
+            <div class="form-group">
+                <p>Search By :</p>
             </div>
         </div>
-    </form>
-    <script>
-        search_id = {"student" : ["Student Id..."],
-                    "admin" : ["Admin Id..."],
-                    "teacher" : ["Teacher Id..."],
-                    "department" : ["Department Id...", "Department Name..."],
-                    "subject" : ["Subject Id...", "Department Name..."],
-                    "class" : ["Student Id...", "Department Name..."]};
+        <div class="col">
+            <div class="form-group">
+                <input type="text" inputmode="numeric" name="id" class="form-control" id="id"
+                    placeholder="ID ...">
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <input type="text" name="username" class="form-control" id="username"
+                    placeholder="Username ...">
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <input type="text" name="contact_no" class="form-control" id="contact_no"
+                    placeholder="Contact No ...">
+            </div>
+        </div>
+        <div class="col">
+            <div class="form-group">
+                <input type="email" name="email" class="form-control" id="email"
+                    placeholder="Email ...">
+            </div>
+        </div>
+        <div class="col">
+            <div class="search-student-btn">
+                <button id="searchButton" type="btn" class="btn btn-primary">Search</button>
+            </div>
+        </div>
+        <div class="col" style="display: flex; justify-content: center;">
+            <div class="search-student-btn">
+                <button id="openButton" type="btn" class="btn btn-danger" style="height: 2.8rem; width: 8rem;">
+                    <i class="fa-solid fa-trash"></i>  Delete All
+                </button>
+            </div>
+        </div>
+        <style>
+            #popupContainer {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 9999;
+                justify-content: center;
+                align-items: center;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+            }
 
-        var panel = sessionStorage.getItem("panel");
+            #popup {
+                background-color: white;
+                padding: 20px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            #buttons {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                gap: 1rem;
+            }
+
+            #popup h2,
+            #popup #confirmButton #closeButton {
+                margin: 5px 0;
+            }
+        </style>
+        <div class="popup-container" id="popupContainer">
+            <div class="popup" id="popup">
+               <h2>Delete all records!</h2>
+               <div id="buttons">
+                  <a href="/admin/deleteall/panel" class="btn btn-danger">Confirm</a>
+                  <button id="closeButton" type="btn" class="btn btn-primary">Go back</button>
+               </div>
+            </div>
+        </div>
+    </div>
+</form>
+<script>
+    search_id = {"student" : ["Student Id..."],
+            "admin" : ["Admin Id..."],
+            "teacher" : ["Teacher Id..."],
+            "department" : ["Department Id...", "Department Name..."],
+            "subject" : ["Subject Id...", "Department Name..."],
+            "class" : ["Student Id...", "Department Name..."]};
+
+    // Go to search page
+    var panel = sessionStorage.getItem("panel");
+
+    // Get the search button
+    const searchButton = document.getElementById("searchButton");
+
+    // Get the open button and popup container
+    const openButton = document.getElementById("openButton");
+    // Get the popup container
+    const popupContainer = document.getElementById("popupContainer");
+
+    // Get the close button
+    const closeButton = document.getElementById("closeButton");
+    // Get the confirm button
+    const confirmButton = document.getElementById("confirmButton");
+
+    // Function to open the popup
+    function openPopup() {
+        console.log("Opening popup");
+        // Make the background screen semi-transparent
+        event.preventDefault();
+        popupContainer.style.display = "flex";
+    }
+
+    // Function to close the popup
+    function closePopup() {
+        console.log("Closing popup");
+        // Hide the popup
+        event.preventDefault();
+        popupContainer.style.display = "none";
+    }
+
+    function search_results() {
         action_name = "/search_data/" + panel;
         document.getElementById('search').action = action_name;
+    }
 
-        console.log('Going into this function');
-        document.getElementById("id").placeholder = search_id[panel][0];
-        if (panel in search_id) {
-            if (panel == "department" || panel == "subject" || panel =="class") {
+    // Add event listeners to the open and close buttons
+    openButton.addEventListener("click", openPopup);
+    closeButton.addEventListener("click", closePopup);
+    searchButton.addEventListener("click", search_results);
+
+
+    console.log('Going into this function');
+    document.getElementById("id").placeholder = search_id[panel][0];
+    if (panel in search_id) {
+        if (panel == "department" || panel == "subject" || panel =="class") {
             document.getElementById("username").placeholder = search_id[panel][1];
             document.getElementById("contact_no").style.visibility = "hidden";
-            document.getElementById("email").style.visibility = "hidden";}
-            else {
-            console.log("Going as usual");}
+            document.getElementById("email").style.visibility = "hidden";
         }
         else {
             console.log("Going as usual");
-        }   
-
-    </script>
-</body>
-</html>
+        }
+    }
+    else {
+        console.log("Going as usual");
+    }
+</script>
