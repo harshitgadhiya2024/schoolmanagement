@@ -317,28 +317,29 @@ def delete_all_data(object):
 
     try:
         panel = object
-        if panel == "admin":
-            coll_name = "admin_data"
-            delete_all_panel_data(app, client, "college_management", coll_name, panel)
-            return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
-        elif panel == "student":
-            coll_name = "students_data"
-            delete_all_panel_data(app, client, "college_management", coll_name, panel)
-            return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
-        elif panel == "department":
-            coll_name = "department_data"
-            delete_all_panel_data(app, client, "college_management", coll_name, panel)
-            return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
-        elif panel == "subject":
-            coll_name = "subject_data"
-            delete_all_panel_data(app, client, "college_management", coll_name, panel)
-            return redirect(url_for('subject_data_list', _external=True, _scheme=secure_type))
+        panel_mapping = {
+            "admin": ("admin_data", "admin_data_list"),
+            "student": ("students_data", "student_data_list"),
+            "department": ("department_data", "department_data_list"),
+            "subject": ("subject_data", "subject_data_list"),
+        }
+
+        coll_name, data_list = panel_mapping.get(panel, ("teacher_data", "teacher_data_list"))
+        delete_result = delete_all_panel_data(app, client, "college_management", coll_name, panel)
+        if delete_result:
+            flash("All data deleted successfully")
+            return redirect(url_for(data_list, _external=True, _scheme=secure_type))
         else:
-            coll_name = "teacher_data"
-            delete_all_panel_data(app, client, "college_management", coll_name, panel)
-            return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
-
-
+            flash("All records deleted...")
+            panel_mapping = {
+                "admin": "admins.html",
+                "student": "students.html",
+                "department": "departments.html",
+                "subject": "subjects.html",
+                "teacher": "teachers.html",
+                "class": "classes.html",
+            }
+            return render_template(panel_mapping[panel])
     except Exception as e:
         app.logger.debug(f"Error in delete data from database: {e}")
         flash("Please try again...")
@@ -444,6 +445,11 @@ def import_data(panel_obj):
                         flash("Data imported successfully")
                     else:
                         flash("Please check the data, for any missing or duplicate data")
+                        # if panel_obj == "class":
+                        #     panel_template = f'add_{panel_obj}es'
+                        # else:
+                        #     panel_template = f'add_{panel_obj}'
+                        return redirect(url_for(panel_template, _external=True, _scheme=secure_type))
                     ## Save this rejected data into the path app.config["REJECTED_DATA_UPLOAD_FOLDER"]
                     if len(rejected_data) > 0:
                         rejected_data_path = os.path.join(app.config['REJECTED_DATA_UPLOAD_FOLDER'], file_name)
