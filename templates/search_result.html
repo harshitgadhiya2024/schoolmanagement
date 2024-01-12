@@ -203,7 +203,7 @@
 				<!-- Back button -->
 				<div class="container" style="padding-bottom: 2rem; line-height: 1.5rem;">
 					<div class="back-button" id="back_button">
-						<span id="back_button_text">&#8672; Back</span>
+						<a id="back_drop" href="/admin/{{panel}}_data"><span id="back_button_text">&#8672; Back</span></a>
 					</div>
 				</div>
 				<!-- /Back Button -->
@@ -269,9 +269,6 @@
 
 	<!-- Adding active menu -->
 	<script>
-		var search_menu = '{{panel}}';
-		console.log(search_menu);
-
 		// Change cursor design
 		document.getElementById("back_button_text").onmouseenter = function(){
 			document.getElementById("back_button").style.cursor = "pointer";
@@ -289,10 +286,6 @@
 			document.getElementById("back_button_text").style.fontWeight = "normal";
 			document.getElementById("back_button_text").style.color = "black";
 		}
-		
-		document.getElementById("back_button").addEventListener("click", function(){
-			// Go back to the previous page
-			history.go(-1);
 		})
 	</script>
 </body>

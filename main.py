@@ -10,13 +10,15 @@ import json
 from constant import constant_data
 from operations.mongo_connection import (mongo_connect, data_added, find_all_data, find_spec_data, update_mongo_data,
                                          delete_data)
-from operations.common_func import (file_check, import_data_into_database, search_panel_data, delete_all_panel_data, get_unique_subject_id, export_panel_data, delete_panel_data, get_unique_department_id,
+from operations.common_func import (file_check, import_data_into_database, search_panel_data, delete_all_panel_data,
+                                    get_unique_subject_id, export_panel_data, delete_panel_data,
+                                    get_unique_department_id,
                                     get_unique_admin_id, get_admin_data, validate_phone_number, password_validation,
                                     logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id,
-                                    get_unique_teacher_id, get_all_country_state_names)
+                                    get_unique_teacher_id, get_all_country_state_names, check_dirs, create_query_list)
 import random
 from flask_mail import Mail
-from flask_ngrok2 import run_with_ngrok
+from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 
 # create a flask app instance
@@ -53,6 +55,7 @@ client = mongo_connect(app=app)
 # allow only that image file extension
 ALLOWED_EXTENSIONS = set(['png', 'jpg', 'jpeg', 'gif' 'svg'])
 
+
 def allowed_photos(filename):
     """
     checking file extension is correct or not
@@ -61,6 +64,7 @@ def allowed_photos(filename):
     :return: True, False
     """
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
 
 def checking_upload_folder(filename):
     """
@@ -79,6 +83,7 @@ def checking_upload_folder(filename):
     except Exception as e:
         print(e)
 
+
 ############################ Login operations ##################################
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -92,7 +97,7 @@ def login():
             type = login_dict["type"]
             if type == "Student":
                 return redirect(url_for('student_dashboard', _external=True, _scheme=secure_type))
-            elif type=="Teacher":
+            elif type == "Teacher":
                 return redirect(url_for('teacher_dashboard', _external=True, _scheme=secure_type))
             else:
                 return redirect(url_for('admin_dashboard', _external=True, _scheme=secure_type))
@@ -104,17 +109,17 @@ def login():
             password = request.form["password"]
             type = request.form["type"]
 
-            if type=="Teacher":
+            if type == "Teacher":
                 di = {"type": "teacher", "teacher_id": int(id), "password": password}
                 teacher_data = find_spec_data(app, db, "login_mapping", di)
                 teacher_data = list(teacher_data)
-                if len(teacher_data)==0:
+                if len(teacher_data) == 0:
                     flash("Please use correct credential..")
                     return render_template("login.html", all_types=all_types)
                 else:
                     session["login_dict"] = {"id": id, "type": "Teacher"}
                     return redirect(url_for('teacher_dashboard', _external=True, _scheme=secure_type))
-            elif type=="Student":
+            elif type == "Student":
                 di = {"type": "student", "student_id": int(id), "password": password}
                 student_data = find_spec_data(app, db, "login_mapping", di)
                 student_data = list(student_data)
@@ -144,6 +149,7 @@ def login():
         flash("Please try again...")
         return redirect(url_for('login', _external=True, _scheme=secure_type))
 
+
 @app.route("/otp_sending", methods=["GET", "POST"])
 def otp_sending():
     """
@@ -166,6 +172,7 @@ def otp_sending():
         app.logger.debug(f"Error in otp sending route: {e}")
         flash("Please try again...")
         return redirect(url_for('otp_verification', _external=True, _scheme=secure_type))
+
 
 @app.route("/otp_verification", methods=["GET", "POST"])
 def otp_verification():
@@ -237,6 +244,7 @@ def otp_verification():
         flash("Please try again...")
         return redirect(url_for('otp_verification', _external=True, _scheme=secure_type))
 
+
 @app.route('/logout', methods=['GET', 'POST'])
 def logout():
     """
@@ -300,6 +308,7 @@ def delete_data(object):
         flash("Please try again...")
         return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
 
+
 @app.route("/admin/deleteall/<object>", methods=["GET", "POST"])
 def delete_all_data(object):
     """
@@ -334,6 +343,7 @@ def delete_all_data(object):
         app.logger.debug(f"Error in delete data from database: {e}")
         flash("Please try again...")
         return redirect(url_for('delete_all_data', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/export/<object>", methods=["GET", "POST"])
 def export_data(object):
@@ -393,28 +403,27 @@ def export_data(object):
         flash("Please try again...")
         return redirect(url_for('export_data', _external=True, _scheme=secure_type))
 
-@app.route("/admin/import_data/<object>", methods=["GET", "POST"])
-def import_data(object):
+
+@app.route("/admin/import_data/<panel_obj>", methods=["GET", "POST"])
+def import_data(panel_obj):
     """
     That funcation can use delete from student, teacher and admin from admin panel
     """
 
     try:
         print("In import data")
-        print(f"object: {object}")
+        print(f"object: {panel_obj}")
         panel_mapping = ['admin_data', 'students_data', 'teacher_data', 'department_data', 'subject_data', 'class_data']
         print(f"Panel mapping: {panel_mapping}")
         db = client["college_management"]
         collection_names = db.list_collection_names()
-        collection_names.remove("constant_details")
         secondary_collection_array = list(set(collection_names) - set(panel_mapping))
-        print(f"Sec col array : {secondary_collection_array}")
-        if object == "class":
-            check_id = "student_id"
-        check_id = f"{object}_id"
-        print(f"Check id: {check_id}")
-        ## Checking if request method is POST
-        if request.method == "POST":
+        print(f"Sec_col_array : {secondary_collection_array}")
+        check_id_mapping = {"admin": "admin_id", "student": "student_id", "teacher": "teacher_id",
+                            "department": "department_id", "subject": "subject_id", "class": "student_id"}
+        if panel_obj in check_id_mapping and request.method == "POST":
+            check_id = check_id_mapping[panel_obj]
+            print(f"Check id: {check_id}")
             ## Getting file from request
             file = request.files["file"]
             ## Checking if file is selected
@@ -422,25 +431,14 @@ def import_data(object):
                 print(f"File name: {file.filename}")
                 ## Securing file and getting file extension
                 file_name = secure_filename(file.filename)
-                if not os.path.isdir(app.config['IMPORT_UPLOAD_FOLDER']):
-                    os.makedirs(app.config['IMPORT_UPLOAD_FOLDER'], exist_ok=True)
-                if not os.path.exists(app.config['REJECTED_DATA_UPLOAD_FOLDER']):
-                    os.makedirs(app.config['REJECTED_DATA_UPLOAD_FOLDER'], exist_ok=True)
-                file_path = os.path.join(app.config['IMPORT_UPLOAD_FOLDER'], file_name)
-                file.save(file_path)
-                file_extension = os.path.splitext(file_name)[1]
+                file_extension, file_path = check_dirs(app, file_name, file)
                 file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
                 print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
-                query_list = []
-                for json_group in reader_json:
-                    query = {}
-                    print(f"Json group: {json_group}")
-                    if check_id in json_group:
-                        print("In here")
-                        query[check_id] = int(json_group[check_id])
-                        query_list.append(query)
-                if file_check_value == True:
-                    result_value, rejected_data = import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json, secondary_collection_array)
+                query_list = create_query_list(app, check_id, reader_json)
+                if file_check_value:
+                    result_value, rejected_data = import_data_into_database(app, db, check_id, query_list,
+                                                                            panel_mapping, field_names, reader_json,
+                                                                            secondary_collection_array)
                     if result_value:
                         print("Appended data to database")
                         flash("Data imported successfully")
@@ -456,18 +454,18 @@ def import_data(object):
                     flash("Please check the file type")
             else:
                 flash("No file selected, please select a file")
-            if object == "class":
-                return render_template(f'{object}es.html')
-            return render_template(f'{object}s.html')
+            if panel_obj == "class":
+                return render_template(f'{panel_obj}es.html')
+            return render_template(f'{panel_obj}s.html')
 
     except Exception as e:
         app.logger.debug(f"Error in export data from database: {e}")
         print(f"Error in export data from database: {e}")
         flash("Please try again...")
-        object
-        if object == "class":
-            return render_template(f'{object}es.html')
-        return render_template(f'{object}s.html')
+        if panel_obj == "class":
+            return render_template(f'{panel_obj}es.html')
+        return render_template(f'{panel_obj}s.html')
+
 
 @app.route("/admin/edit_data/<object>", methods=["GET", "POST"])
 def edit_data(object):
@@ -502,24 +500,24 @@ def edit_data(object):
         print(f"Rendered html page is : {html_page_name}")
         country_code, contact = edit_dict["contact_no"].split(" ")
         return render_template(html_page_name,
-            first_name = edit_dict["first_name"],
-            last_name = edit_dict["last_name"],
-            username = edit_dict["username"],
-            password = edit_dict["password"],
-            dob = edit_dict["dob"],
-            gender = edit_dict["gender"],
-            countrycode = country_code,
-            contact_no = contact,
-            emergency_contact_no = edit_dict["emergency_contact_no"],
-            email = edit_dict["email"],
-            address = edit_dict["address"],
-            admission_date = edit_dict["admission_date"],
-            city = edit_dict["city"],
-            state = edit_dict["state"],
-            country = edit_dict["country"],
-            department = edit_dict["department"],
-            classes = edit_dict["classes"],
-            batch_year = edit_dict["batch_year"])
+                               first_name=edit_dict["first_name"],
+                               last_name=edit_dict["last_name"],
+                               username=edit_dict["username"],
+                               password=edit_dict["password"],
+                               dob=edit_dict["dob"],
+                               gender=edit_dict["gender"],
+                               countrycode=country_code,
+                               contact_no=contact,
+                               emergency_contact_no=edit_dict["emergency_contact_no"],
+                               email=edit_dict["email"],
+                               address=edit_dict["address"],
+                               admission_date=edit_dict["admission_date"],
+                               city=edit_dict["city"],
+                               state=edit_dict["state"],
+                               country=edit_dict["country"],
+                               department=edit_dict["department"],
+                               classes=edit_dict["classes"],
+                               batch_year=edit_dict["batch_year"])
 
     except Exception as e:
         app.logger.debug(f"Error in edit data from database: {e}")
@@ -527,6 +525,7 @@ def edit_data(object):
         print(e)
         panel = object.split("-")[0]
         return render_template(f'{panel}s.html')
+
 
 @app.route("/search_data/<object>", methods=["GET", "POST"])
 def search_data(object):
@@ -545,9 +544,9 @@ def search_data(object):
             "admin": "admin_data",
             "student": "students_data",
             "teacher": "teacher_data",
-            "department" : "department_data",
-            "subject" : "subject_data",
-            "class" : "class_data",
+            "department": "department_data",
+            "subject": "subject_data",
+            "class": "class_data",
         }
         if panel in panel_mapping:
             print("Panel is in the mapping")
@@ -609,7 +608,7 @@ def admin_dashboard():
         if login_dict != "nothing":
             type = login_dict["type"]
             id = login_dict["id"]
-            photo_link = "/"+login_dict["photo_link"]
+            photo_link = "/" + login_dict["photo_link"]
         else:
             type = "Anonymous"
             id = "anonymous"
@@ -620,6 +619,7 @@ def admin_dashboard():
         app.logger.debug(f"Error in admin dashboard route: {e}")
         flash("Please try again...")
         return redirect(url_for('admin_dashboard', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/admin_data", methods=["GET", "POST"])
 def admin_data_list():
@@ -634,7 +634,8 @@ def admin_data_list():
         photo_link = "/" + login_dict["photo_link"]
         all_keys, all_values = get_admin_data(app, client, "college_management", "admin_data")
         if all_keys and all_values:
-            return render_template("admins.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("admins.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
         else:
             return render_template("admins.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id,
                                    photo_link=photo_link)
@@ -643,6 +644,7 @@ def admin_data_list():
         app.logger.debug(f"Error in show admins data from admin panel: {e}")
         flash("Please try again..")
         return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/add_admin/<op>", methods=["GET", "POST"])
 def add_admin(op):
@@ -661,17 +663,17 @@ def add_admin(op):
         allcountry, allstate, allcountrycode = get_all_country_state_names(app)
 
         if request.method == "POST":
-        #     if op == "update":
-        #         delete_dict = {}
-        #         type = delete_dict.get("type", "else")
-        #         db = client[db_name]
-        #         coll = db[coll_name]
-        #         if type == "student" or type == "teacher" or type == "admin":
-        #             coll.delete_one(delete_dict)
-        #             coll1 = db["login_mapping"]
-        #             coll1.delete_one(delete_dict)
-        #         else:
-        #             coll.delete_one(delete_dict)
+            #     if op == "update":
+            #         delete_dict = {}
+            #         type = delete_dict.get("type", "else")
+            #         db = client[db_name]
+            #         coll = db[coll_name]
+            #         if type == "student" or type == "teacher" or type == "admin":
+            #             coll.delete_one(delete_dict)
+            #             coll1 = db["login_mapping"]
+            #             coll1.delete_one(delete_dict)
+            #         else:
+            #             coll.delete_one(delete_dict)
             photo_link = request.files["photo_link"]
             first_name = request.form["first_name"]
             last_name = request.form["last_name"]
@@ -689,29 +691,29 @@ def add_admin(op):
             new_contact_no = countrycode + " " + contact_no
             new_emergency_contact_no = countrycode + " " + emergency_contact_no
 
-            #username validation
+            # username validation
             all_admin_data = find_all_data(app, db, "admin_data")
             get_all_username = [ad_data["username"] for ad_data in all_admin_data]
             if username in get_all_username:
                 flash("Admin Username already exits. Please try with different Username")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
-            #password validation
+            # password validation
             if not password_validation(app=app, password=password):
                 flash("Please choose strong password. Add at least 1 special character, number, capitalize latter..")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             # contact number and emergency contact number validation
             get_phone_val = validate_phone_number(app=app, phone_number=contact_no)
@@ -719,42 +721,42 @@ def add_admin(op):
             if get_phone_val == "invalid number":
                 flash("Please enter correct contact no.")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if get_emergency_phone_val == "invalid number":
                 flash("Please enter correct emergency contact no.")
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if 'photo_link' not in request.files:
                 flash('No file part')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if photo_link.filename == '':
                 flash('No image selected for uploading')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
             if photo_link and allowed_photos(photo_link.filename):
                 filename = secure_filename(username + ".jpg")
@@ -765,25 +767,25 @@ def add_admin(op):
                 else:
                     flash('This filename already exits')
                     return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                            allstate=allstate, allcountry=allcountry,
-                                            first_name=first_name, last_name=last_name, username=username,
-                                            password=password,
-                                            gender=gender, contact_no=contact_no,
-                                            emergency_contact_no=emergency_contact_no,
-                                            email=email, address=address, countrycode=countrycode, city=city,
-                                            state=state, country=country,
-                                            type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                           allstate=allstate, allcountry=allcountry,
+                                           first_name=first_name, last_name=last_name, username=username,
+                                           password=password,
+                                           gender=gender, contact_no=contact_no,
+                                           emergency_contact_no=emergency_contact_no,
+                                           email=email, address=address, countrycode=countrycode, city=city,
+                                           state=state, country=country,
+                                           type=type, photo_link=photo_main_link, admin_id=admin_id)
             else:
                 flash('This file format is not supported.....')
                 return render_template("add-admin.html", allcountrycode=allcountrycode, allcity=allcity,
-                                        allstate=allstate, allcountry=allcountry,
-                                        first_name=first_name, last_name=last_name, username=username, password=password,
-                                        gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
-                                        email=email, address=address, countrycode=countrycode, city=city, state=state,
-                                        country=country,
-                                        type=type, photo_link=photo_main_link, admin_id=admin_id)
+                                       allstate=allstate, allcountry=allcountry,
+                                       first_name=first_name, last_name=last_name, username=username, password=password,
+                                       gender=gender, contact_no=contact_no, emergency_contact_no=emergency_contact_no,
+                                       email=email, address=address, countrycode=countrycode, city=city, state=state,
+                                       country=country,
+                                       type=type, photo_link=photo_main_link, admin_id=admin_id)
 
-            #admin-id validation
+            # admin-id validation
             all_admin_data = find_spec_data(app, db, "login_mapping", {"type": "admin"})
             get_all_admin_id = [ad_data["admin_id"] for ad_data in all_admin_data]
             unique_admin_id = get_unique_admin_id(app, get_all_admin_id)
@@ -817,19 +819,22 @@ def add_admin(op):
             data_added(app, db, "admin_data", register_dict)
             data_added(app, db, "login_mapping", admin_mapping_dict)
             mail.send_message("[Rylee] Account Credentials",
-                                sender="harshitgadhiya8980@gmail.com",
-                                recipients=[email],
-                                body=f"Hello There,\nWe hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an 'Account' has been processed successfully and your account has been opened.\n Please check with the below credential.\nAdminID: {unique_admin_id}\nUsername: {username}\nif you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com\nThank you for your cooperation.\nBest regards,\nCodescatter",
-                                html=f'<p>Hello There,</p><p>We hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an "Account" has been processed successfully and your account has been opened.</p><p>Please check with the below credential.</p><p><h2><b>AdminID - {unique_admin_id}</b></h2></p><p><h2><b>Username - {username}</b></h2></p><p>if you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com</p><p>Thank you for your cooperation.</p><p>Best regards,<br>Codescatter</p>')
+                              sender="harshitgadhiya8980@gmail.com",
+                              recipients=[email],
+                              body=f"Hello There,\nWe hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an 'Account' has been processed successfully and your account has been opened.\n Please check with the below credential.\nAdminID: {unique_admin_id}\nUsername: {username}\nif you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com\nThank you for your cooperation.\nBest regards,\nCodescatter",
+                              html=f'<p>Hello There,</p><p>We hope this message finds you well. As part of our ongoing commitment to ensure the security of your account. Your request for opening an "Account" has been processed successfully and your account has been opened.</p><p>Please check with the below credential.</p><p><h2><b>AdminID - {unique_admin_id}</b></h2></p><p><h2><b>Username - {username}</b></h2></p><p>if you have any concerns regarding your account security, be sure to get in touch with our support team immediately at help@codescatter.com</p><p>Thank you for your cooperation.</p><p>Best regards,<br>Codescatter</p>')
             flash("Data Added Successfully")
             return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
         else:
-            return render_template("add-admin.html", type=type, photo_link=photo_main_link, admin_id=admin_id, allcountrycode=allcountrycode, allcity=allcity, allstate=allstate, allcountry=allcountry)
+            return render_template("add-admin.html", type=type, photo_link=photo_main_link, admin_id=admin_id,
+                                   allcountrycode=allcountrycode, allcity=allcity, allstate=allstate,
+                                   allcountry=allcountry)
 
     except Exception as e:
         app.logger.debug(f"Error in add admin data route: {e}")
         flash("Please try again...")
         return redirect(url_for('add_admin', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/student_data", methods=["GET", "POST"])
 def student_data_list():
@@ -844,14 +849,17 @@ def student_data_list():
         photo_link = "/" + login_dict["photo_link"]
         all_keys, all_values = get_admin_data(app, client, "college_management", "students_data")
         if all_keys and all_values:
-            return render_template("students.html", type=type, admin_id=id, photo_link=photo_link, all_keys=all_keys[0], all_values=all_values)
+            return render_template("students.html", type=type, admin_id=id, photo_link=photo_link, all_keys=all_keys[0],
+                                   all_values=all_values)
         else:
-            return render_template("students.html", type=type, admin_id=id, photo_link=photo_link, all_keys=all_keys, all_values=all_values)
+            return render_template("students.html", type=type, admin_id=id, photo_link=photo_link, all_keys=all_keys,
+                                   all_values=all_values)
 
     except Exception as e:
         app.logger.debug(f"Error in student data list route: {e}")
         flash("Please try again...")
         return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/add_student", methods=["GET", "POST"])
 def add_student():
@@ -896,15 +904,15 @@ def add_student():
             new_contact_no = countrycode + " " + contact_no
             new_emergency_contact_no = countrycode + " " + emergency_contact_no
 
-            #username validation
+            # username validation
             all_student_data = find_all_data(app, db, "students_data")
             get_all_username = [st_data["username"] for st_data in all_student_data]
             if username in get_all_username:
                 flash("Username already exits. Please try with different Username")
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,department=department,
+                                       allcity=allcity, alldepartment=alldepartment, department=department,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
-                                       photo_link=photo_student_link,classes=classes,
+                                       photo_link=photo_student_link, classes=classes,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
                                        country=country,
@@ -912,13 +920,13 @@ def add_student():
                                        emergency_contact_no=emergency_contact_no, email=email, batch_year=batch_year,
                                        address=address, admission_date=admission_date)
 
-            #password validation
+            # password validation
             if not password_validation(app=app, password=password):
                 flash("Please choose strong password. Add at least 1 special character, number, capitalize latter..")
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
-                                       photo_link=photo_student_link,classes=classes, department=department,
+                                       photo_link=photo_student_link, classes=classes, department=department,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
                                        country=country,
@@ -932,9 +940,9 @@ def add_student():
             if get_phone_val == "invalid number":
                 flash("Please enter correct contact no.")
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
-                                       photo_link=photo_student_link,classes=classes, department=department,
+                                       photo_link=photo_student_link, classes=classes, department=department,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
                                        country=country,
@@ -945,12 +953,12 @@ def add_student():
             if get_emergency_phone_val == "invalid number":
                 flash("Please enter correct emergency contact no.")
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
                                        photo_link=photo_student_link,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
-                                       country=country,classes=classes, department=department,
+                                       country=country, classes=classes, department=department,
                                        dob=dob, gender=gender, contact_no=contact_no,
                                        emergency_contact_no=emergency_contact_no, email=email, batch_year=batch_year,
                                        address=address, admission_date=admission_date)
@@ -958,12 +966,12 @@ def add_student():
             if 'photo_link' not in request.files:
                 flash('No file part')
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
                                        photo_link=photo_student_link,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
-                                       country=country,classes=classes, department=department,
+                                       country=country, classes=classes, department=department,
                                        dob=dob, gender=gender, contact_no=contact_no,
                                        emergency_contact_no=emergency_contact_no, email=email, batch_year=batch_year,
                                        address=address, admission_date=admission_date)
@@ -971,12 +979,12 @@ def add_student():
             if photo_link.filename == '':
                 flash('No image selected for uploading')
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
                                        photo_link=photo_student_link,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
-                                       country=country,classes=classes,department=department,
+                                       country=country, classes=classes, department=department,
                                        dob=dob, gender=gender, contact_no=contact_no,
                                        emergency_contact_no=emergency_contact_no, email=email, batch_year=batch_year,
                                        address=address, admission_date=admission_date)
@@ -990,12 +998,12 @@ def add_student():
                 else:
                     flash('This filename already exits')
                     return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                           allcity=allcity,alldepartment=alldepartment,
+                                           allcity=allcity, alldepartment=alldepartment,
                                            allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
                                            photo_link=photo_student_link,
                                            allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                            password=password, countrycode=countrycode, city=city, state=state,
-                                           country=country,classes=classes,department=department,
+                                           country=country, classes=classes, department=department,
                                            dob=dob, gender=gender, contact_no=contact_no,
                                            emergency_contact_no=emergency_contact_no, email=email,
                                            batch_year=batch_year,
@@ -1003,17 +1011,17 @@ def add_student():
             else:
                 flash('This file format is not supported.....')
                 return render_template("add-student.html", allcountrycode=allcountrycode, username=username,
-                                       allcity=allcity,alldepartment=alldepartment,
+                                       allcity=allcity, alldepartment=alldepartment,
                                        allstate=allstate, allcountry=allcountry, type=type, admin_id=admin_id,
                                        photo_link=photo_student_link,
                                        allbatchyear=allbatchyear, first_name=first_name, last_name=last_name,
                                        password=password, countrycode=countrycode, city=city, state=state,
-                                       country=country,classes=classes,department=department,
+                                       country=country, classes=classes, department=department,
                                        dob=dob, gender=gender, contact_no=contact_no,
                                        emergency_contact_no=emergency_contact_no, email=email, batch_year=batch_year,
                                        address=address, admission_date=admission_date)
 
-            #student-id validation
+            # student-id validation
             all_student_data = find_spec_data(app, db, "login_mapping", {"type": "student"})
             get_all_student_id = [st_data["student_id"] for st_data in all_student_data]
             unique_student_id = get_unique_student_id(app, get_all_student_id)
@@ -1054,7 +1062,7 @@ def add_student():
             classes_mapping_dict["department"] = department
             classes_mapping_dict["class_name"] = classes
             classes_mapping_dict["type"] = "student"
-            data_added(app,db,"class_data", classes_mapping_dict)
+            data_added(app, db, "class_data", classes_mapping_dict)
             data_added(app, db, "students_data", register_dict)
             data_added(app, db, "login_mapping", student_mapping_dict)
             mail.send_message("[Rylee] Account Credentials",
@@ -1065,12 +1073,15 @@ def add_student():
             flash("Data Added Successfully")
             return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
         else:
-            return render_template("add-student.html",type=type, alldepartment=alldepartment, admin_id=admin_id, photo_link=photo_student_link, allcountrycode=allcountrycode, allcity=allcity, allstate=allstate, allcountry=allcountry, allbatchyear=allbatchyear)
+            return render_template("add-student.html", type=type, alldepartment=alldepartment, admin_id=admin_id,
+                                   photo_link=photo_student_link, allcountrycode=allcountrycode, allcity=allcity,
+                                   allstate=allstate, allcountry=allcountry, allbatchyear=allbatchyear)
 
     except Exception as e:
         app.logger.debug(f"Error in add student data route: {e}")
         flash("Please try again...")
         return redirect(url_for('student_register', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/teacher_data", methods=["GET", "POST"])
 def teacher_data_list():
@@ -1096,6 +1107,7 @@ def teacher_data_list():
         app.logger.debug(f"Error in add teacher data route: {e}")
         flash("Please try again...")
         return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/add_teacher", methods=["GET", "POST"])
 def add_teacher():
@@ -1200,15 +1212,16 @@ def add_teacher():
 
             if 'photo_link' not in request.files:
                 flash('No file part')
-                return render_template("add-teacher.html", username=username, allcountrycode=allcountrycode, allcity=allcity,
+                return render_template("add-teacher.html", username=username, allcountrycode=allcountrycode,
+                                       allcity=allcity,
                                        allstate=allstate, type=type, admin_id=admin_id, photo_link=photo_teacher_link,
                                        allcountry=allcountry, allqualification=allqualification,
                                        allsubjects=allsubjects, alldepartment=alldepartment, countrycode=countrycode,
                                        first_name=first_name, last_name=last_name, password=password, dob=dob,
                                        gender=gender, contact_no=contact_no, city=city, state=state, country=country,
                                        emergency_contact_no=emergency_contact_no, email=email, subject=subject,
-                                       address=address, joining_date=joining_date, qualification=qualification, department=department)
-
+                                       address=address, joining_date=joining_date, qualification=qualification,
+                                       department=department)
 
             if photo_link.filename == '':
                 flash('No image selected for uploading')
@@ -1224,7 +1237,7 @@ def add_teacher():
                                        department=department)
 
             if photo_link and allowed_photos(photo_link.filename):
-                filename = secure_filename("student_"+username+".jpg")
+                filename = secure_filename("student_" + username + ".jpg")
                 ans = checking_upload_folder(filename=filename)
                 if ans != "duplicate":
                     photo_link.save(os.path.join(app.config["PROFILE_UPLOAD_FOLDER"], filename))
@@ -1320,6 +1333,7 @@ def add_teacher():
         flash("Please try again...")
         return redirect(url_for('add_teacher', _external=True, _scheme=secure_type))
 
+
 @app.route("/admin/department_data", methods=["GET", "POST"])
 def department_data_list():
     """
@@ -1333,14 +1347,17 @@ def department_data_list():
         photo_link = "/" + login_dict["photo_link"]
         all_keys, all_values = get_admin_data(app, client, "college_management", "department_data")
         if all_keys and all_values:
-            return render_template("departments.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("departments.html", all_keys=all_keys[0], all_values=all_values, type=type,
+                                   admin_id=id, photo_link=photo_link)
         else:
-            return render_template("departments.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("departments.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
 
     except Exception as e:
         app.logger.debug(f"Error in show departments data from department panel: {e}")
         flash("Please try again..")
         return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/add_department", methods=["GET", "POST"])
 def add_department():
@@ -1359,15 +1376,16 @@ def add_department():
             department_date = request.form["department_date"]
             department_name = request.form["department_name"]
 
-            #department validation
+            # department validation
             all_department_data = find_all_data(app, db, "department_data")
             get_all_department_name = [st_data["department_name"] for st_data in all_department_data]
             if department_name in get_all_department_name:
                 flash("Department name already exits. Please try with different Department name")
                 return render_template("add-department.html", hod_name=hod_name, department_name=department_name,
-                                       department_date=department_date, type=type, admin_id=admin_id, photo_link=photo_student_link)
+                                       department_date=department_date, type=type, admin_id=admin_id,
+                                       photo_link=photo_student_link)
 
-            #department-id validation
+            # department-id validation
             all_department_data = find_all_data(app, db, "department_data")
             get_all_department_id = [dt_data["department_id"] for dt_data in all_department_data]
             unique_department_id = get_unique_department_id(app, get_all_department_id)
@@ -1385,12 +1403,13 @@ def add_department():
             flash("Data Added Successfully")
             return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
         else:
-            return render_template("add-department.html",type=type, admin_id=admin_id, photo_link=photo_student_link)
+            return render_template("add-department.html", type=type, admin_id=admin_id, photo_link=photo_student_link)
 
     except Exception as e:
         app.logger.debug(f"Error in add departpent data route: {e}")
         flash("Please try again...")
         return redirect(url_for('add_department', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/subject_data", methods=["GET", "POST"])
 def subject_data_list():
@@ -1405,14 +1424,17 @@ def subject_data_list():
         photo_link = "/" + login_dict["photo_link"]
         all_keys, all_values = get_admin_data(app, client, "college_management", "subject_data")
         if all_keys and all_values:
-            return render_template("subjects.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("subjects.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
         else:
-            return render_template("subjects.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("subjects.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
 
     except Exception as e:
         app.logger.debug(f"Error in show departments data from department panel: {e}")
         flash("Please try again..")
         return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/add_subject", methods=["GET", "POST"])
 def add_subject():
@@ -1433,7 +1455,7 @@ def add_subject():
             department = request.form["department"]
             subject_date = request.form["subject_date"]
 
-            #department-id validation
+            # department-id validation
             all_subject_data = find_all_data(app, db, "subject_data")
             get_all_subject_id = [sub_data["subject_id"] for sub_data in all_subject_data]
             unique_subject_id = get_unique_subject_id(app, get_all_subject_id)
@@ -1452,12 +1474,13 @@ def add_subject():
             return redirect(url_for('subject_data_list', _external=True, _scheme=secure_type))
         else:
             return render_template("add-subject.html", type=type, admin_id=admin_id,
-                                       photo_link=photo_link, alldepartment=alldepartment)
+                                   photo_link=photo_link, alldepartment=alldepartment)
 
     except Exception as e:
         app.logger.debug(f"Error in add subject data route: {e}")
         flash("Please try again...")
         return redirect(url_for('add_subject', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/classes_data", methods=["GET", "POST"])
 def class_data_list():
@@ -1472,28 +1495,16 @@ def class_data_list():
         photo_link = "/" + login_dict["photo_link"]
         all_keys, all_values = get_admin_data(app, client, "college_management", "class_data")
         if all_keys and all_values:
-            return render_template("classes.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("classes.html", all_keys=all_keys[0], all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
         else:
-            return render_template("classes.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id, photo_link=photo_link)
+            return render_template("classes.html", all_keys=all_keys, all_values=all_values, type=type, admin_id=id,
+                                   photo_link=photo_link)
 
     except Exception as e:
         app.logger.debug(f"Error in show departments data from department panel: {e}")
         flash("Please try again..")
         return redirect(url_for('class_data_list', _external=True, _scheme=secure_type))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 @app.route("/student_dashboard", methods=["GET", "POST"])
@@ -1508,13 +1519,14 @@ def student_dashboard():
             type = login_dict["type"]
             id = login_dict["id"]
         else:
-            type="Anonymous"
-            id="anonymous"
+            type = "Anonymous"
+            id = "anonymous"
         return render_template("student-dashboard.html", student_id=id, type=type)
 
     except Exception as e:
         flash("Please try again.......................................")
         return redirect(url_for('verification', _external=True, _scheme=secure_type))
+
 
 @app.route("/teacher_dashboard", methods=["GET", "POST"])
 def teacher_dashboard():
@@ -1535,6 +1547,7 @@ def teacher_dashboard():
     except Exception as e:
         flash("Please try again.......................................")
         return redirect(url_for('verification', _external=True, _scheme=secure_type))
+
 
 @app.route("/livechat", methods=["GET", "POST"])
 def livechat():

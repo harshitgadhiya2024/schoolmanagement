@@ -53,6 +53,8 @@
                 z-index: 9999;
                 justify-content: center;
                 align-items: center;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
             }
 
             #popup {
@@ -80,7 +82,7 @@
             <div class="popup" id="popup">
                <h2>Delete all records!</h2>
                <div id="buttons">
-                  <button id="confirmButton" type="btn" class="btn btn-danger">Confirm</button>
+                  <a href="/admin/deleteall/panel" class="btn btn-danger">Confirm</a>
                   <button id="closeButton" type="btn" class="btn btn-primary">Go back</button>
                </div>
             </div>
@@ -123,26 +125,20 @@
     function closePopup() {
         console.log("Closing popup");
         // Hide the popup
+        event.preventDefault();
         popupContainer.style.display = "none";
     }
-
-    // Function to call flask deleteall endpoint
-    function delete_all() {
-        action_name = "/admin/deleteall/" + panel;
-        confirmButton.action = action_name;
-    }
-
-    // Add event listeners to the open and close buttons
-    openButton.addEventListener("click", openPopup);
-    closeButton.addEventListener("click", closePopup);
-<!--    confirmButton.addEventListener("click", delete_all);-->
 
     function search_results() {
         action_name = "/search_data/" + panel;
         document.getElementById('search').action = action_name;
     }
 
+    // Add event listeners to the open and close buttons
+    openButton.addEventListener("click", openPopup);
+    closeButton.addEventListener("click", closePopup);
     searchButton.addEventListener("click", search_results);
+
 
     console.log('Going into this function');
     document.getElementById("id").placeholder = search_id[panel][0];
