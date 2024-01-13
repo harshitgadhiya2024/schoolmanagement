@@ -396,6 +396,7 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
     try:
         db = client[db_name]
         coll = db[coll_name]
+        print(f"search_value: {search_value} and type: {type(search_value)}")
         key, value = search_value.split("|")
         if key == "class_id":
             key = "student_id"
@@ -470,60 +471,64 @@ def import_data_into_database(app, db, panel, reader_coll):
         register_dict = {}
         for key in ["username", "first_name", "last_name", "password", "gender", "contact_no",
                     "emergency_contact_no", "email", "address", "city", "state", "country"]:
-            register_dict[key] = reader_coll.get(key, "")
+            register_dict[key] = reader_coll.get(key, "NA")
 
         if panel == "admin":
             register_dict = {
-                "admin_id": reader_coll.get("unique_admin_id"),
+                "admin_id": reader_coll.get("unique_admin_id", "admin_id"),
                 "type": "admin",
             }
             admin_mapping_dict = {key: reader_coll[key] for key in ["admin_id", "username", "email", "password"]}
             admin_mapping_dict["type"] = "admin"
-            data_added(app, db, ["admin_data", "login_mapping"], [register_dict, admin_mapping_dict])
+            [data_added(app, db, ["admin_data", "login_mapping"], [register_dict, admin_mapping_dict])]
         elif panel == "student":
             register_dict = {
-                "student_id": reader_coll.get("unique_student_id"),
-                "dob": reader_coll.get("dob", ""),
-                "admission_date": reader_coll.get("admission_date", ""),
+                "student_id": reader_coll.get("unique_student_id", "student_id"),
+                "dob": reader_coll.get("dob", "NA"),
+                "admission_date": reader_coll.get("admission_date", "NA"),
                 "classes": reader_coll.get("classes", ""),
-                "department": reader_coll.get("department", ""),
-                "batch_year": reader_coll.get("batch_year", ""),
+                "department": reader_coll.get("department", "NA"),
+                "batch_year": reader_coll.get("batch_year", "NA"),
                 **panel_dict[panel],
                 **common_dict
             }
 
-            student_mapping_dict = {key: reader_coll.get(key, "") for key in ["student_id", "username", "email", "password"]}
+            student_mapping_dict = {key: reader_coll.get(key, "") for key in
+                                    ["student_id", "username", "email", "password"]}
             student_mapping_dict["type"] = "student"
-            classes_mapping_dict = {"student_id": reader_coll.get("student_id", ""),
-                                    "department": reader_coll.get("department", ""), "class_name": reader_coll.get("class_name", ""),
+            classes_mapping_dict = {"student_id": reader_coll.get("student_id"),
+                                    "department": reader_coll.get("department", "NA"),
+                                    "class_name": reader_coll.get("class_name", "NA"),
                                     **panel_dict[panel]}
-            data_added(app, db, ["class_data", "students_data", "login_mapping"],
-                       [classes_mapping_dict, register_dict, student_mapping_dict])
+
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["class_data", "students_data", "login_mapping"], [register_dict, classes_mapping_dict, student_mapping_dict])]
         elif panel == "teacher":
             register_dict = {
-                "teacher_id": reader_coll.get("unique_teacher_id"),
-                "dob": reader_coll.get("dob", ""),
-                "qualification": reader_coll.get("qualification", ""),
-                "department": reader_coll.get("department", ""),
-                "subject": reader_coll.get("subject", ""),
-                "joining_date": reader_coll.get("joining_date", ""),
+                "teacher_id": reader_coll.get("unique_teacher_id", "teacher_id"),
+                "dob": reader_coll.get("dob", "NA"),
+                "qualification": reader_coll.get("qualification", "NA"),
+                "department": reader_coll.get("department", "NA"),
+                "subject": reader_coll.get("subject", "NA"),
+                "joining_date": reader_coll.get("joining_date", "NA"),
                 **panel_dict[panel],
                 **common_dict
             }
 
-            teacher_mapping_dict = {key: reader_coll.get(key, "") for key in ["teacher_id", "username", "email", "password"]}
+            teacher_mapping_dict = {key: reader_coll.get(key, "") for key in
+                                    ["teacher_id", "username", "email", "password"]}
             teacher_mapping_dict["type"] = "teacher"
-            subject_mapping_dict = {"teacher_id": reader_coll.get("teacher_id", ""),
-                                    "department_name": reader_coll.get("department", ""), "subject": reader_coll.get("subject", ""),
+            subject_mapping_dict = {"teacher_id": reader_coll.get("teacher_id"),
+                                    "department_name": reader_coll.get("department", "NA"),
+                                    "subject": reader_coll.get("subject", "NA"),
                                     **panel_dict[panel]}
-            data_added(app, db, ["subject_mapping", "teacher_data", "login_mapping"],
-                       [subject_mapping_dict, register_dict, teacher_mapping_dict])
+
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["subject_mapping", "teacher_data", "login_mapping"], [subject_mapping_dict, register_dict, teacher_mapping_dict])]
         elif panel == "department":
             register_dict = {
-                "department_id": reader_coll.get("unique_department_id"),
-                "department_name": reader_coll.get("department_name", ""),
-                "department_date": reader_coll.get("department_date", ""),
-                "HOD_name": reader_coll.get("HOD_name", ""),
+                "department_id": reader_coll.get("unique_department_id", "department_id"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "department_date": reader_coll.get("department_date", "NA"),
+                "HOD_name": reader_coll.get("HOD_name", "NA"),
                 **panel_dict[panel],
                 **common_dict
             }
@@ -531,20 +536,20 @@ def import_data_into_database(app, db, panel, reader_coll):
             data_added(app, db, "department_data", register_dict)
         elif panel == "subject":
             register_dict = {
-                "subject_id": reader_coll.get("unique_subject_id"),
-                "subject_name": reader_coll.get("subject_name", ""),
-                "department_name": reader_coll.get("department_name", ""),
-                "subject_start_date": reader_coll.get("subject_start_date", ""),
+                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "subject_name": reader_coll.get("subject_name", "NA"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "subject_start_date": reader_coll.get("subject_start_date", "NA"),
                 **panel_dict[panel],
                 **common_dict
             }
             data_added(app, db, "subject_data", register_dict)
         else:
             register_dict = {
-                "subject_id": reader_coll.get("unique_subject_id"),
-                "subject_name": reader_coll.get("subject_name", ""),
-                "department_name": reader_coll.get("department_name", ""),
-                "subject_start_date": reader_coll.get("subject_start_date", ""),
+                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "subject_name": reader_coll.get("subject_name", "NA"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "subject_start_date": reader_coll.get("subject_start_date", "NA"),
                 **panel_dict[panel],
                 **common_dict
             }
@@ -553,8 +558,8 @@ def import_data_into_database(app, db, panel, reader_coll):
         app.logger.debug("Successfully added data to database")
         return True
     except Exception as e:
-        print(f"Error: {e}")
-        app.logger.debug(f"Error: {e}")
+        print(f"Error in importing data to database: {e}")
+        app.logger.debug(f"Error in importing data to database: {e}")
         return False
 
 
@@ -605,6 +610,7 @@ def file_check(app, file_extension, file_path):
 
             ## Removing keys that are not to be used in import data
             remove_key_bool, reader_json = remove_unused_keys(app, reader_json, field_names)
+            print()
             if remove_key_bool:
                 return True, field_names, reader_json
             else:
@@ -616,6 +622,7 @@ def file_check(app, file_extension, file_path):
             app.logger.debug("Please select correct file format (.csv, .xlsx or .json)")
             return False, {}, {}
     except Exception as e:
+        print(f"Error in file check: {e}")
         app.logger.debug(f"Error in file check: {e}")
         return None, {}, {}
 
@@ -671,20 +678,21 @@ def create_query_list(app, panel_obj, reader_json, file_name):
         query_and_data_dict = {}
         rejected_data = []
         for json_place_value in range(len(reader_json)):
-            query = ""
             json_dict = reader_json[json_place_value]
             print(f"Json group: {json_dict}")
             if used_panel in json_dict:
                 print("In here")
-                query = used_panel + "|" + json_dict[used_panel]
+                query = used_panel + "|" + str(json_dict[used_panel])
                 print(f"Query key: {query} and type of query key: {type(query)}")
+                json_dict[used_panel] = int(json_dict[used_panel])
                 query_and_data_dict[query] = json_dict
             else:
+                print("Adding data to rejected file")
                 rejected_data.append(json_dict)
                 del reader_json[json_place_value]
         if len(rejected_data) > 0:
             update_rejected_data_file(app, file_name, rejected_data)
-        return query_and_data_dict, panel_obj
+        return query_and_data_dict, panel_obj, f"{panel_obj}_data"
     except Exception as e:
         print(f"Error in create query list: {e}")
         app.logger.debug(f"Error in create query list: {e}")
@@ -694,7 +702,7 @@ def create_query_list(app, panel_obj, reader_json, file_name):
 def update_rejected_data_file(app, file_name, rejected_data):
     try:
         file_name_extension = get_timestamp(app)
-        file_name_extension = file_name_extension.replace(":", "_").replace("-", "_").repalce(" ", "_")
+        file_name_extension = file_name_extension.replace(":", "_").replace("-", "_").replace(" ", "_")
         updated_file_name = file_name + "_" + file_name_extension
         print(f"Updated file name: {updated_file_name}")
         rejected_data_path = os.path.join(app.config['REJECTED_DATA_UPLOAD_FOLDER'], file_name)

@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 # Apply cors policy in our app instance
 CORS(app)
-run_with_ngrok(app)
+# run_with_ngrok(app)
 
 # setup all config variable
 app.config["enviroment"] = constant_data.get("enviroment", "qa")
@@ -433,22 +433,22 @@ def import_data(panel_obj):
                 print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
 
                 ## Creating a list of query from the ids present in data to be imported
-                query_and_data_dict, used_panel = create_query_list(app, panel_obj, reader_json, file_name)
-
+                query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
+                print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
                 ## Checking if for each query in query_and_data_dict list, data is present already in default collection
                 ## If data is not present then send the data to import_data function
                 ## Approach 1 - Classic method
                 rejected_data = []
                 for query, value in query_and_data_dict.items():
                     print(f"Query: {query} and type of query: {type(query)}, Value: {value} and type of value : {type(value)}")
-                    query_result = search_panel_data(app, client, "college_management", query, used_panel)
+                    query_result = search_panel_data(app, client, "college_management", query, used_panel_obj)
                     if query_result is None:
                         res = import_data_into_database(app, "college_management", used_panel, value)
                         print(f"Result: {res}")
                     else:
                         update_rejected_data_file(app, file_name, rejected_data)
-                # return redirect(f'/admin/{panel_obj}_data')
-                return render_template(f'{panel_obj}s.html')
+                return redirect(f'/admin/{panel_obj}_data')
+                # return render_template(f'{panel_obj}s.html')
             else:
                 flash("No file selected, please select a file")
             if panel_obj == "class":
@@ -531,6 +531,10 @@ def search_data(object):
     """
 
     try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
         panel = object
         search_dict = {}
         id = request.form.get('id', '')
@@ -579,7 +583,7 @@ def search_data(object):
         else:
             print("Panel is not in the mapping")
             app.logger.debug(f"Error in searching data from database")
-        return render_template('search_result.html', panel=panel, search_dict=search_dict)
+        return render_template('search_result.html', panel=panel, search_dict=search_dict, type=type, admin_id=admin_id, photo_link=photo_link)
 
     except Exception as e:
         app.logger.debug(f"Error in searching data from database: {e}")
@@ -643,8 +647,8 @@ def admin_data_list():
         return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
 
 
-@app.route("/admin/add_admin/<op>", methods=["GET", "POST"])
-def add_admin(op):
+@app.route("/admin/add_admin", methods=["GET", "POST"])
+def add_admin():
     """
     In this route we can handling admin register process
     :return: register template

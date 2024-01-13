@@ -20,6 +20,7 @@ def mongo_connect(app):
     except Exception as e:
         app.logger.error(f"Error when connecting mongo: {e}")
 
+
 def data_added(app, db, coll_name, new_dict):
 
     """
