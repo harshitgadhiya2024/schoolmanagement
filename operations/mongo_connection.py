@@ -20,6 +20,7 @@ def mongo_connect(app):
     except Exception as e:
         app.logger.error(f"Error when connecting mongo: {e}")
 
+
 def data_added(app, db, coll_name, new_dict):
 
     """
@@ -33,6 +34,7 @@ def data_added(app, db, coll_name, new_dict):
     """
     try:
         coll = db[coll_name]
+        print("new dict: ", new_dict)
         coll.insert_one(new_dict)
         return "add_data"
 

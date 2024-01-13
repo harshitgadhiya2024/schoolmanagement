@@ -396,6 +396,7 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
     try:
         db = client[db_name]
         coll = db[coll_name]
+        print(f"search_value: {search_value} and type: {type(search_value)}")
         key, value = search_value.split("|")
         if key == "class_id":
             key = "student_id"
@@ -448,57 +449,124 @@ def get_all_country_state_names(app):
         app.logger.debug(f"Error in get country, state or city from database: {e}")
 
 
-
-
-
-def import_data_into_database(app, db, check_id, query_list, panel_mapping, field_names, reader_json,
-                              secondary_collection_array={}):
+def import_data_into_database(app, db, panel, reader_coll):
     try:
-        if check_id in field_names:
-            for collection in panel_mapping:
-                print(f"Collection: {collection}")
-                count, default_keys = check_for_files(app, collection, db, reader_json)
-                for query, reader_coll in zip(query_list, reader_json):
-                    print(f"Collection: {collection}, query: {query}")
-                    updated_reader_coll = {}
-                    if len(default_keys) != 0:
-                        for def_key in default_keys:
-                            if def_key in reader_coll:
-                                updated_reader_coll[def_key] = reader_coll[def_key]
-                        print(f"Updated reader coll: {updated_reader_coll}")
-                    ## Check if this check_id is present in collection
-                    check_data = db[collection].count_documents(query) > 0
-                    print(f"Check data: {check_data}")
-                    rejected_data = []
-                    if not check_data and (count == 0 or check_id in default_keys):
-                        ## Save data in collection
-                        print(f"Check id is not present in {collection}")
-                        ## Convert value of id into int
-                        updated_reader_coll[check_id] = int(updated_reader_coll[check_id])
-                    else:
-                        print(
-                            f"Check id is present in collection or it is not a correct collection for this Id:"
-                            f" {collection}")
-                        print(f"Data is rejected : {updated_reader_coll}")
-                        if "_id" in updated_reader_coll:
-                            del updated_reader_coll["_id"]
-                        rejected_data.append(updated_reader_coll)
-                    result = update_collection(app, collection, db, updated_reader_coll)
-            return True, rejected_data
+        print(f"Data: {reader_coll}")
+        print(f"Panel: {panel}")
+
+        common_dict = {
+            "inserted_on": get_timestamp(app),
+            "updated_on": get_timestamp(app)
+        }
+
+        panel_dict = {
+            "admin": {"type": "admin"},
+            "student": {"type": "student"},
+            "teacher": {"type": "teacher"},
+            "department": {"type": "department"},
+            "subject": {"type": "subject"},
+            "class": {"type": "class"},
+        }
+
+        register_dict = {}
+        for key in ["username", "first_name", "last_name", "password", "gender", "contact_no",
+                    "emergency_contact_no", "email", "address", "city", "state", "country"]:
+            register_dict[key] = reader_coll.get(key, "NA")
+
+        if panel == "admin":
+            register_dict = {
+                "admin_id": reader_coll.get("unique_admin_id", "admin_id"),
+                "type": "admin",
+            }
+            admin_mapping_dict = {key: reader_coll[key] for key in ["admin_id", "username", "email", "password"]}
+            admin_mapping_dict["type"] = "admin"
+            [data_added(app, db, ["admin_data", "login_mapping"], [register_dict, admin_mapping_dict])]
+        elif panel == "student":
+            register_dict = {
+                "student_id": reader_coll.get("unique_student_id", "student_id"),
+                "dob": reader_coll.get("dob", "NA"),
+                "admission_date": reader_coll.get("admission_date", "NA"),
+                "classes": reader_coll.get("classes", ""),
+                "department": reader_coll.get("department", "NA"),
+                "batch_year": reader_coll.get("batch_year", "NA"),
+                **panel_dict[panel],
+                **common_dict
+            }
+
+            student_mapping_dict = {key: reader_coll.get(key, "") for key in
+                                    ["student_id", "username", "email", "password"]}
+            student_mapping_dict["type"] = "student"
+            classes_mapping_dict = {"student_id": reader_coll.get("student_id"),
+                                    "department": reader_coll.get("department", "NA"),
+                                    "class_name": reader_coll.get("class_name", "NA"),
+                                    **panel_dict[panel]}
+
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["class_data", "students_data", "login_mapping"], [register_dict, classes_mapping_dict, student_mapping_dict])]
+        elif panel == "teacher":
+            register_dict = {
+                "teacher_id": reader_coll.get("unique_teacher_id", "teacher_id"),
+                "dob": reader_coll.get("dob", "NA"),
+                "qualification": reader_coll.get("qualification", "NA"),
+                "department": reader_coll.get("department", "NA"),
+                "subject": reader_coll.get("subject", "NA"),
+                "joining_date": reader_coll.get("joining_date", "NA"),
+                **panel_dict[panel],
+                **common_dict
+            }
+
+            teacher_mapping_dict = {key: reader_coll.get(key, "") for key in
+                                    ["teacher_id", "username", "email", "password"]}
+            teacher_mapping_dict["type"] = "teacher"
+            subject_mapping_dict = {"teacher_id": reader_coll.get("teacher_id"),
+                                    "department_name": reader_coll.get("department", "NA"),
+                                    "subject": reader_coll.get("subject", "NA"),
+                                    **panel_dict[panel]}
+
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["subject_mapping", "teacher_data", "login_mapping"], [subject_mapping_dict, register_dict, teacher_mapping_dict])]
+        elif panel == "department":
+            register_dict = {
+                "department_id": reader_coll.get("unique_department_id", "department_id"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "department_date": reader_coll.get("department_date", "NA"),
+                "HOD_name": reader_coll.get("HOD_name", "NA"),
+                **panel_dict[panel],
+                **common_dict
+            }
+
+            data_added(app, db, "department_data", register_dict)
+        elif panel == "subject":
+            register_dict = {
+                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "subject_name": reader_coll.get("subject_name", "NA"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "subject_start_date": reader_coll.get("subject_start_date", "NA"),
+                **panel_dict[panel],
+                **common_dict
+            }
+            data_added(app, db, "subject_data", register_dict)
         else:
-            app.logger.debug(f"Id is not present in field names")
-            print(f"Id is not present in field names")
-            return False, []
+            register_dict = {
+                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "subject_name": reader_coll.get("subject_name", "NA"),
+                "department_name": reader_coll.get("department_name", "NA"),
+                "subject_start_date": reader_coll.get("subject_start_date", "NA"),
+                **panel_dict[panel],
+                **common_dict
+            }
+            data_added(app, db, "subject_data", register_dict)
+        print("Successfully added data to database")
+        app.logger.debug("Successfully added data to database")
+        return True
     except Exception as e:
-        app.logger.debug(f"Error in import data into database: {e}")
-        print(f"Error in import data into database: {e}")
-        return None, []
+        print(f"Error in importing data to database: {e}")
+        app.logger.debug(f"Error in importing data to database: {e}")
+        return False
 
 
 def file_check(app, file_extension, file_path):
     try:
         if file_extension == ".csv" or file_extension == ".xlsx" or file_extension == ".json":
-            ## Check if this check_id is present in this file
+            ## Converting data to json for multiple file types
             if file_extension == ".csv":
                 with open(file_path) as f:
                     reader = csv.DictReader(f)
@@ -539,7 +607,10 @@ def file_check(app, file_extension, file_path):
                 field_names = list(reader_json[0].keys())
                 print(f"Field names: {field_names}")
                 print(f"Data is in json format: {reader_json}")
+
+            ## Removing keys that are not to be used in import data
             remove_key_bool, reader_json = remove_unused_keys(app, reader_json, field_names)
+            print()
             if remove_key_bool:
                 return True, field_names, reader_json
             else:
@@ -551,22 +622,27 @@ def file_check(app, file_extension, file_path):
             app.logger.debug("Please select correct file format (.csv, .xlsx or .json)")
             return False, {}, {}
     except Exception as e:
+        print(f"Error in file check: {e}")
         app.logger.debug(f"Error in file check: {e}")
         return None, {}, {}
 
 
 def remove_unused_keys(app, reader_json, field_names):
     try:
+        ## Keys that are to be manipulated
         remove_keys = ["_id", "updated_on", "photo_link"]
         for remove_key in remove_keys:
             if remove_key in field_names:
                 print("Removing key in reader json: ", remove_key)
                 for reader_dict in reader_json:
+                    ## Updating this key with new timestamp
                     if remove_key == "updated_on":
                         reader_dict[remove_key] = get_timestamp(app)
                         print("Updated timestamp")
+                    ## Removing link to photo ID
                     elif remove_key == "photo_link":
                         reader_dict[remove_key] = "NA"
+                    ## Deleting _id from import data
                     else:
                         del reader_dict[remove_key]
                         print("Removed key in reader json")
@@ -594,58 +670,83 @@ def check_dirs(app, file_name, file):
         return None, None
 
 
-def create_query_list(app, check_id, reader_json):
+def create_query_list(app, panel_obj, reader_json, file_name):
     try:
-        query_list = []
-        for json_group in reader_json:
-            query = {}
-            print(f"Json group: {json_group}")
-            if check_id in json_group:
+        check_id_mapping = {"admin": "admin_id", "student": "student_id", "teacher": "teacher_id",
+                            "department": "department_id", "subject": "subject_id", "class": "student_id"}
+        used_panel = check_id_mapping[panel_obj]
+        query_and_data_dict = {}
+        rejected_data = []
+        for json_place_value in range(len(reader_json)):
+            json_dict = reader_json[json_place_value]
+            print(f"Json group: {json_dict}")
+            if used_panel in json_dict:
                 print("In here")
-                query[check_id] = int(json_group[check_id])
-                query_list.append(query)
-        return query_list
+                query = used_panel + "|" + str(json_dict[used_panel])
+                print(f"Query key: {query} and type of query key: {type(query)}")
+                json_dict[used_panel] = int(json_dict[used_panel])
+                query_and_data_dict[query] = json_dict
+            else:
+                print("Adding data to rejected file")
+                rejected_data.append(json_dict)
+                del reader_json[json_place_value]
+        if len(rejected_data) > 0:
+            update_rejected_data_file(app, file_name, rejected_data)
+        return query_and_data_dict, panel_obj, f"{panel_obj}_data"
     except Exception as e:
         print(f"Error in create query list: {e}")
         app.logger.debug(f"Error in create query list: {e}")
-        return []
+        return {}, None
 
 
-def update_collection(app, collection, db, updated_reader_coll):
+def update_rejected_data_file(app, file_name, rejected_data):
     try:
-        result = db[collection].insert_one(updated_reader_coll)
-        if result:
-            app.logger.debug(f"Data inserted into collection: {collection}")
-            return True
+        file_name_extension = get_timestamp(app)
+        file_name_extension = file_name_extension.replace(":", "_").replace("-", "_").replace(" ", "_")
+        updated_file_name = file_name + "_" + file_name_extension
+        print(f"Updated file name: {updated_file_name}")
+        rejected_data_path = os.path.join(app.config['REJECTED_DATA_UPLOAD_FOLDER'], file_name)
+        with open(rejected_data_path, 'a') as f:
+            json.dump(rejected_data, f)
     except Exception as e:
-        app.logger.debug(f"Error in update collection: {e}")
-        print(f"Error in update collection: {e}")
-        return False
+        print(f"Error in updating rejected data file: {e}")
+        app.logger.debug(f"Error in updating rejected data file: {e}")
 
-
-def check_for_files(app, collection, db, reader_json):
-    try:
-        count = db[collection].count_documents({})
-        default_keys = []
-        if count > 0:
-            print('The collection has documents.')
-            first_record = db[collection].find_one({})
-            print(f"First record: {first_record}")
-            # Get the keys of the first record
-            default_keys = list(first_record.keys())
-            print(f"Keys: {default_keys}")
-            remove_keys = ["_id", "inserted_on", "updated_on", "photo_link"]
-            for remove_key in remove_keys:
-                if remove_key in default_keys:
-                    default_keys.remove(remove_key)
-            print("Keys in json format updated: ", reader_json)
-            print("Updated keys: ", default_keys)
-            app.logger.debug("Documents present in collection")
-        else:
-            print('The collection is empty.')
-            app.logger.debug("Documents not present in collection")
-        return count, default_keys
-    except Exception as e:
-        app.logger.debug(f"Error in check for files: {e}")
-        print(f"Error in check for files: {e}")
-        return 0, []
+# def update_collection(app, collection, db, updated_reader_coll):
+#     try:
+#         result = db[collection].insert_one(updated_reader_coll)
+#         if result:
+#             app.logger.debug(f"Data inserted into collection: {collection}")
+#             return True
+#     except Exception as e:
+#         app.logger.debug(f"Error in update collection: {e}")
+#         print(f"Error in update collection: {e}")
+#         return False
+#
+#
+# def check_for_files(app, collection, db, reader_json):
+#     try:
+#         count = db[collection].count_documents({})
+#         default_keys = []
+#         if count > 0:
+#             print('The collection has documents.')
+#             first_record = db[collection].find_one({})
+#             print(f"First record: {first_record}")
+#             # Get the keys of the first record
+#             default_keys = list(first_record.keys())
+#             print(f"Keys: {default_keys}")
+#             remove_keys = ["_id", "inserted_on", "updated_on", "photo_link"]
+#             for remove_key in remove_keys:
+#                 if remove_key in default_keys:
+#                     default_keys.remove(remove_key)
+#             print("Keys in json format updated: ", reader_json)
+#             print("Updated keys: ", default_keys)
+#             app.logger.debug("Documents present in collection")
+#         else:
+#             print('The collection is empty.')
+#             app.logger.debug("Documents not present in collection")
+#         return count, default_keys
+#     except Exception as e:
+#         app.logger.debug(f"Error in check for files: {e}")
+#         print(f"Error in check for files: {e}")
+#         return 0, []

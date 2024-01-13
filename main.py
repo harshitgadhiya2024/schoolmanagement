@@ -15,7 +15,8 @@ from operations.common_func import (file_check, import_data_into_database, searc
                                     get_unique_department_id,
                                     get_unique_admin_id, get_admin_data, validate_phone_number, password_validation,
                                     logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id,
-                                    get_unique_teacher_id, get_all_country_state_names, check_dirs, create_query_list)
+                                    get_unique_teacher_id, get_all_country_state_names, check_dirs, create_query_list,
+                                    update_rejected_data_file)
 import random
 from flask_mail import Mail
 from flask_ngrok import run_with_ngrok
@@ -26,7 +27,7 @@ app = Flask(__name__)
 
 # Apply cors policy in our app instance
 CORS(app)
-run_with_ngrok(app)
+# run_with_ngrok(app)
 
 # setup all config variable
 app.config["enviroment"] = constant_data.get("enviroment", "qa")
@@ -413,51 +414,41 @@ def import_data(panel_obj):
 
     try:
         print("In import data")
-        print(f"object: {panel_obj}")
-        panel_mapping = ['admin_data', 'students_data', 'teacher_data', 'department_data', 'subject_data', 'class_data']
-        print(f"Panel mapping: {panel_mapping}")
-        db = client["college_management"]
-        collection_names = db.list_collection_names()
-        secondary_collection_array = list(set(collection_names) - set(panel_mapping))
-        print(f"Sec_col_array : {secondary_collection_array}")
-        check_id_mapping = {"admin": "admin_id", "student": "student_id", "teacher": "teacher_id",
-                            "department": "department_id", "subject": "subject_id", "class": "student_id"}
-        if panel_obj in check_id_mapping and request.method == "POST":
-            check_id = check_id_mapping[panel_obj]
-            print(f"Check id: {check_id}")
+        print(f"Panel Object is: {panel_obj}")
+        ## Check if panel object is in the mapping and request method is POST
+        ## If yes, then it will store the id type in a variable with which it will be checking for present record
+        if request.method == "POST":
             ## Getting file from request
             file = request.files["file"]
-            ## Checking if file is selected
+            ## Checking if file is selected, if yes, secure the filename
             if file.filename != "":
                 print(f"File name: {file.filename}")
                 ## Securing file and getting file extension
                 file_name = secure_filename(file.filename)
+                ## Check for file extension and paths for storing imported and rejected files
                 file_extension, file_path = check_dirs(app, file_name, file)
+
+                ## Checking if file is valid
                 file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
                 print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
-                query_list = create_query_list(app, check_id, reader_json)
-                if file_check_value:
-                    result_value, rejected_data = import_data_into_database(app, db, check_id, query_list,
-                                                                            panel_mapping, field_names, reader_json,
-                                                                            secondary_collection_array)
-                    if result_value:
-                        print("Appended data to database")
-                        flash("Data imported successfully")
+
+                ## Creating a list of query from the ids present in data to be imported
+                query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
+                print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
+                ## Checking if for each query in query_and_data_dict list, data is present already in default collection
+                ## If data is not present then send the data to import_data function
+                ## Approach 1 - Classic method
+                rejected_data = []
+                for query, value in query_and_data_dict.items():
+                    print(f"Query: {query} and type of query: {type(query)}, Value: {value} and type of value : {type(value)}")
+                    query_result = search_panel_data(app, client, "college_management", query, used_panel_obj)
+                    if query_result is None:
+                        res = import_data_into_database(app, "college_management", used_panel, value)
+                        print(f"Result: {res}")
                     else:
-                        flash("Please check the data, for any missing or duplicate data")
-                        # if panel_obj == "class":
-                        #     panel_template = f'add_{panel_obj}es'
-                        # else:
-                        #     panel_template = f'add_{panel_obj}'
-                        return redirect(url_for(panel_template, _external=True, _scheme=secure_type))
-                    ## Save this rejected data into the path app.config["REJECTED_DATA_UPLOAD_FOLDER"]
-                    if len(rejected_data) > 0:
-                        rejected_data_path = os.path.join(app.config['REJECTED_DATA_UPLOAD_FOLDER'], file_name)
-                        with open(rejected_data_path, 'w') as f:
-                            json.dump(rejected_data, f)
-                        print(f"Rejected data saved at: {rejected_data_path}")
-                else:
-                    flash("Please check the file type")
+                        update_rejected_data_file(app, file_name, rejected_data)
+                return redirect(f'/admin/{panel_obj}_data')
+                # return render_template(f'{panel_obj}s.html')
             else:
                 flash("No file selected, please select a file")
             if panel_obj == "class":
@@ -540,6 +531,10 @@ def search_data(object):
     """
 
     try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
         panel = object
         search_dict = {}
         id = request.form.get('id', '')
@@ -588,7 +583,7 @@ def search_data(object):
         else:
             print("Panel is not in the mapping")
             app.logger.debug(f"Error in searching data from database")
-        return render_template('search_result.html', panel=panel, search_dict=search_dict)
+        return render_template('search_result.html', panel=panel, search_dict=search_dict, type=type, admin_id=admin_id, photo_link=photo_link)
 
     except Exception as e:
         app.logger.debug(f"Error in searching data from database: {e}")
@@ -652,8 +647,8 @@ def admin_data_list():
         return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
 
 
-@app.route("/admin/add_admin/<op>", methods=["GET", "POST"])
-def add_admin(op):
+@app.route("/admin/add_admin", methods=["GET", "POST"])
+def add_admin():
     """
     In this route we can handling admin register process
     :return: register template
