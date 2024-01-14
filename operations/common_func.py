@@ -449,10 +449,10 @@ def get_all_country_state_names(app):
         app.logger.debug(f"Error in get country, state or city from database: {e}")
 
 
-def import_data_into_database(app, db, panel, reader_coll):
+def import_data_into_database(app, db, used_panel, reader_coll):
     try:
         print(f"Data: {reader_coll}")
-        print(f"Panel: {panel}")
+        print(f"Used panel: {used_panel}")
 
         common_dict = {
             "inserted_on": get_timestamp(app),
@@ -473,7 +473,7 @@ def import_data_into_database(app, db, panel, reader_coll):
                     "emergency_contact_no", "email", "address", "city", "state", "country"]:
             register_dict[key] = reader_coll.get(key, "NA")
 
-        if panel == "admin":
+        if used_panel == "admin":
             register_dict = {
                 "admin_id": reader_coll.get("unique_admin_id", "admin_id"),
                 "type": "admin",
@@ -481,7 +481,7 @@ def import_data_into_database(app, db, panel, reader_coll):
             admin_mapping_dict = {key: reader_coll[key] for key in ["admin_id", "username", "email", "password"]}
             admin_mapping_dict["type"] = "admin"
             [data_added(app, db, ["admin_data", "login_mapping"], [register_dict, admin_mapping_dict])]
-        elif panel == "student":
+        elif used_panel == "student":
             register_dict = {
                 "student_id": reader_coll.get("unique_student_id", "student_id"),
                 "dob": reader_coll.get("dob", "NA"),
@@ -489,7 +489,7 @@ def import_data_into_database(app, db, panel, reader_coll):
                 "classes": reader_coll.get("classes", ""),
                 "department": reader_coll.get("department", "NA"),
                 "batch_year": reader_coll.get("batch_year", "NA"),
-                **panel_dict[panel],
+                **panel_dict[used_panel],
                 **common_dict
             }
 
@@ -499,10 +499,13 @@ def import_data_into_database(app, db, panel, reader_coll):
             classes_mapping_dict = {"student_id": reader_coll.get("student_id"),
                                     "department": reader_coll.get("department", "NA"),
                                     "class_name": reader_coll.get("class_name", "NA"),
-                                    **panel_dict[panel]}
+                                    **panel_dict[used_panel]}
+            print(f"classes_mapping_dict: {classes_mapping_dict} and type: {type(classes_mapping_dict)}")
+            print(f"register_dict: {register_dict} and type: {type(register_dict)}")
+            print(f"student_mapping_dict: {student_mapping_dict} and type: {type(student_mapping_dict)}")
 
             [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["class_data", "students_data", "login_mapping"], [register_dict, classes_mapping_dict, student_mapping_dict])]
-        elif panel == "teacher":
+        elif used_panel == "teacher":
             register_dict = {
                 "teacher_id": reader_coll.get("unique_teacher_id", "teacher_id"),
                 "dob": reader_coll.get("dob", "NA"),
@@ -510,7 +513,7 @@ def import_data_into_database(app, db, panel, reader_coll):
                 "department": reader_coll.get("department", "NA"),
                 "subject": reader_coll.get("subject", "NA"),
                 "joining_date": reader_coll.get("joining_date", "NA"),
-                **panel_dict[panel],
+                **panel_dict[used_panel],
                 **common_dict
             }
 
@@ -520,27 +523,27 @@ def import_data_into_database(app, db, panel, reader_coll):
             subject_mapping_dict = {"teacher_id": reader_coll.get("teacher_id"),
                                     "department_name": reader_coll.get("department", "NA"),
                                     "subject": reader_coll.get("subject", "NA"),
-                                    **panel_dict[panel]}
+                                    **panel_dict[used_panel]}
 
             [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["subject_mapping", "teacher_data", "login_mapping"], [subject_mapping_dict, register_dict, teacher_mapping_dict])]
-        elif panel == "department":
+        elif used_panel == "department":
             register_dict = {
                 "department_id": reader_coll.get("unique_department_id", "department_id"),
                 "department_name": reader_coll.get("department_name", "NA"),
                 "department_date": reader_coll.get("department_date", "NA"),
                 "HOD_name": reader_coll.get("HOD_name", "NA"),
-                **panel_dict[panel],
+                **panel_dict[used_panel],
                 **common_dict
             }
 
             data_added(app, db, "department_data", register_dict)
-        elif panel == "subject":
+        elif used_panel == "subject":
             register_dict = {
                 "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
                 "subject_name": reader_coll.get("subject_name", "NA"),
                 "department_name": reader_coll.get("department_name", "NA"),
                 "subject_start_date": reader_coll.get("subject_start_date", "NA"),
-                **panel_dict[panel],
+                **panel_dict[used_panel],
                 **common_dict
             }
             data_added(app, db, "subject_data", register_dict)
@@ -550,7 +553,7 @@ def import_data_into_database(app, db, panel, reader_coll):
                 "subject_name": reader_coll.get("subject_name", "NA"),
                 "department_name": reader_coll.get("department_name", "NA"),
                 "subject_start_date": reader_coll.get("subject_start_date", "NA"),
-                **panel_dict[panel],
+                **panel_dict[used_panel],
                 **common_dict
             }
             data_added(app, db, "subject_data", register_dict)

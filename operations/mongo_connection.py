@@ -39,7 +39,9 @@ def data_added(app, db, coll_name, new_dict):
         return "add_data"
 
     except Exception as e:
+        print(f"Error when save data in database: {e}")
         app.logger.error(f"Error when save data in database: {e}")
+
 
 # get all data from my table from database
 def find_all_data(app, db, coll_name):
