@@ -253,6 +253,340 @@ def logout():
         return redirect(url_for('login', _external=True, _scheme=secure_type))
 
 
+########################## Operation Route ####################################
+
+@app.route("/admin/delete_data/<object>", methods=["GET", "POST"])
+def delete_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        spliting_object = object.split("-")
+        panel = spliting_object[0]
+        id = spliting_object[1]
+        delete_dict = {}
+        if panel == "admin":
+            coll_name = "admin_data"
+            delete_dict["admin_id"] = int(id)
+            delete_dict["type"] = "admin"
+            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
+            return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
+        elif panel == "student":
+            delete_dict["student_id"] = int(id)
+            delete_dict["type"] = "student"
+            coll_name = "students_data"
+            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
+            return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
+        elif panel == "department":
+            delete_dict["department_id"] = int(id)
+            coll_name = "department_data"
+            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
+            return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
+        elif panel == "subject":
+            delete_dict["subject_id"] = int(id)
+            coll_name = "subject_data"
+            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
+            return redirect(url_for('subject_data_list', _external=True, _scheme=secure_type))
+        else:
+            delete_dict["teacher_id"] = int(id)
+            delete_dict["type"] = "teacher"
+            coll_name = "teacher_data"
+            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
+            return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
+
+
+    except Exception as e:
+        app.logger.debug(f"Error in delete data from database: {e}")
+        flash("Please try again...")
+        return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
+
+
+@app.route("/admin/deleteall/<object>", methods=["GET", "POST"])
+def delete_all_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        panel = object
+        panel_mapping = {
+            "admin": ("admin_data", "admin_data_list"),
+            "student": ("students_data", "student_data_list"),
+            "department": ("department_data", "department_data_list"),
+            "subject": ("subject_data", "subject_data_list"),
+        }
+
+        coll_name, data_list = panel_mapping.get(panel, ("teacher_data", "teacher_data_list"))
+        delete_result = delete_all_panel_data(app, client, "college_management", coll_name, panel)
+        if delete_result:
+            flash("All data deleted successfully")
+            return redirect(url_for(data_list, _external=True, _scheme=secure_type))
+        else:
+            flash("All records deleted...")
+            panel_mapping = {
+                "admin": "admins.html",
+                "student": "students.html",
+                "department": "departments.html",
+                "subject": "subjects.html",
+                "teacher": "teachers.html",
+                "class": "classes.html",
+            }
+            return render_template(panel_mapping[panel])
+    except Exception as e:
+        app.logger.debug(f"Error in delete data from database: {e}")
+        flash("Please try again...")
+        return redirect(url_for('delete_all_data', _external=True, _scheme=secure_type))
+
+
+@app.route("/admin/export/<object>", methods=["GET", "POST"])
+def export_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        db = client["college_management"]
+        spliting_object = object.split("-")
+        panel = spliting_object[0]
+        type = spliting_object[1]
+        if panel == "admin":
+            res = find_all_data(app, db, "admin_data")
+            all_data = []
+            for each_res in res:
+                del each_res["_id"]
+                all_data.append(each_res)
+            output_path = export_panel_data(app, all_data, panel, type)
+            return send_file(output_path, as_attachment=True)
+        elif panel == "student":
+            res = find_all_data(app, db, "students_data")
+            all_data = []
+            for each_res in res:
+                del each_res["_id"]
+                all_data.append(each_res)
+            output_path = export_panel_data(app, all_data, panel, type)
+            return send_file(output_path, as_attachment=True)
+        elif panel == "department":
+            res = find_all_data(app, db, "department_data")
+            all_data = []
+            for each_res in res:
+                del each_res["_id"]
+                all_data.append(each_res)
+            output_path = export_panel_data(app, all_data, panel, type)
+            return send_file(output_path, as_attachment=True)
+        elif panel == "subject":
+            res = find_all_data(app, db, "subject_data")
+            all_data = []
+            for each_res in res:
+                del each_res["_id"]
+                all_data.append(each_res)
+            output_path = export_panel_data(app, all_data, panel, type)
+            return send_file(output_path, as_attachment=True)
+        else:
+            res = find_all_data(app, db, "teacher_data")
+            all_data = []
+            for each_res in res:
+                del each_res["_id"]
+                all_data.append(each_res)
+            output_path = export_panel_data(app, all_data, panel, type)
+            return send_file(output_path, as_attachment=True)
+
+
+    except Exception as e:
+        app.logger.debug(f"Error in export data from database: {e}")
+        flash("Please try again...")
+        return redirect(url_for('export_data', _external=True, _scheme=secure_type))
+
+
+@app.route("/admin/import_data/<panel_obj>", methods=["GET", "POST"])
+def import_data(panel_obj):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        print("In import data")
+        print(f"Panel Object is: {panel_obj}")
+        ## Check if panel object is in the mapping and request method is POST
+        ## If yes, then it will store the id type in a variable with which it will be checking for present record
+        if request.method == "POST":
+            ## Getting file from request
+            file = request.files["file"]
+            ## Checking if file is selected, if yes, secure the filename
+            if file.filename != "":
+                print(f"File name: {file.filename}")
+                ## Securing file and getting file extension
+                file_name = secure_filename(file.filename)
+                ## Check for file extension and paths for storing imported and rejected files
+                file_extension, file_path = check_dirs(app, file_name, file)
+
+                ## Checking if file is valid
+                file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
+                print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
+
+                ## Creating a list of query from the ids present in data to be imported
+                query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
+                print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
+                ## Checking if for each query in query_and_data_dict list, data is present already in default collection
+                ## If data is not present then send the data to import_data function
+                ## Approach 1 - Classic method
+                rejected_data = []
+                for query, value in query_and_data_dict.items():
+                    print(f"Query: {query} and type of query: {type(query)}, Value: {value} and type of value : {type(value)}")
+                    query_result = search_panel_data(app, client, "college_management", query, used_panel_obj)
+                    if query_result is None:
+                        res = import_data_into_database(app, "college_management", used_panel, value)
+                        print(f"Result: {res}")
+                    else:
+                        update_rejected_data_file(app, file_name, rejected_data)
+                return redirect(f'/admin/{panel_obj}_data')
+                # return render_template(f'{panel_obj}s.html')
+            else:
+                flash("No file selected, please select a file")
+            if panel_obj == "class":
+                return render_template(f'{panel_obj}es.html')
+            return render_template(f'{panel_obj}s.html')
+
+    except Exception as e:
+        app.logger.debug(f"Error in export data from database: {e}")
+        print(f"Error in export data from database: {e}")
+        flash("Please try again...")
+        if panel_obj == "class":
+            return render_template(f'{panel_obj}es.html')
+        return render_template(f'{panel_obj}s.html')
+
+
+@app.route("/admin/edit_data/<object>", methods=["GET", "POST"])
+def edit_data(object):
+    """
+    That funcation can use delete from student, teacher and admin from admin panel
+    """
+
+    try:
+        # We can directly assign values to panel and id variable
+        panel, id = object.split("-")
+        edit_dict = {}
+
+        # Define a mapping of panel to collection and search dictionary
+        panel_mapping = {
+            "admin": ("admin_data", {"admin_id": id, "type": "admin"}),
+            "student": ("students_data", {"student_id": id, "type": "student"}),
+            "teacher": ("teacher_data", {"teacher_id": id, "type": "teacher"}),
+        }
+
+        # Check if panel is in the mapping
+        # If it is, get the collection and search dictionary``
+        if panel in panel_mapping:
+            coll_name, edit_dict = panel_mapping[panel]
+            search_value = panel + "_id|" + id
+            edit_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
+            print(f"Search dictionary is : {edit_dict}")
+            html_page_name = f"add-{panel}.html"
+        # If it is not, set a flash message and return to the previous screen
+        else:
+            flash("Please try again...")
+            html_page_name = f"{panel}s.html"
+        print(f"Rendered html page is : {html_page_name}")
+        country_code, contact = edit_dict["contact_no"].split(" ")
+        return render_template(html_page_name,
+                               first_name=edit_dict["first_name"],
+                               last_name=edit_dict["last_name"],
+                               username=edit_dict["username"],
+                               password=edit_dict["password"],
+                               dob=edit_dict["dob"],
+                               gender=edit_dict["gender"],
+                               countrycode=country_code,
+                               contact_no=contact,
+                               emergency_contact_no=edit_dict["emergency_contact_no"],
+                               email=edit_dict["email"],
+                               address=edit_dict["address"],
+                               admission_date=edit_dict["admission_date"],
+                               city=edit_dict["city"],
+                               state=edit_dict["state"],
+                               country=edit_dict["country"],
+                               department=edit_dict["department"],
+                               classes=edit_dict["classes"],
+                               batch_year=edit_dict["batch_year"])
+
+    except Exception as e:
+        app.logger.debug(f"Error in edit data from database: {e}")
+        flash("Please try again...")
+        print(e)
+        panel = object.split("-")[0]
+        return render_template(f'{panel}s.html')
+
+
+@app.route("/search_data/<object>", methods=["GET", "POST"])
+def search_data(object):
+    """
+    That funcation can use search data from student, teacher and admin from admin panel
+    """
+
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        panel = object
+        search_dict = {}
+        id = request.form.get('id', '')
+        username = request.form.get('username', '')
+        contact_no = request.form.get('contact_no', '')
+        email = request.form.get('email', '')
+        panel_mapping = {
+            "admin": "admin_data",
+            "student": "students_data",
+            "teacher": "teacher_data",
+            "department": "department_data",
+            "subject": "subject_data",
+            "class": "class_data",
+        }
+        if panel in panel_mapping:
+            print("Panel is in the mapping")
+            if panel in ["admin", "student", "teacher"]:
+                if id:
+                    search_value = f'{panel}_id|{id}'
+                elif username:
+                    search_value = f'username|{username}'
+                elif contact_no:
+                    search_value = f'contact_no|{contact_no}'
+                elif email:
+                    search_value = f'email|{email}'
+                else:
+                    app.logger.debug(f"Search field is invalid, please try with some other field...")
+                    if panel == "class":
+                        return render_template(f'{panel}es.html')
+                    return render_template(f'{panel}s.html')
+            else:
+                if id:
+                    search_value = f'{panel}_id|{id}'
+                elif username:
+                    search_value = f'department_name|{username}'
+                elif contact_no and panel in ["class"]:
+                    search_value = f'class_name|{contact_no}'
+                else:
+                    app.logger.debug(f"Search field is invalid, please try with some other field...")
+                    if panel == "class":
+                        return render_template(f'{panel}es.html')
+                    return render_template(f'{panel}s.html')
+            coll_name = panel_mapping[panel]
+            print(f"Search value is : {search_value}, coll_name is : {coll_name}")
+            search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
+        else:
+            print("Panel is not in the mapping")
+            app.logger.debug(f"Error in searching data from database")
+        return render_template('search_result.html', panel=panel, search_dict=search_dict, type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in searching data from database: {e}")
+        print(e)
+        flash("Please try again...")
+        panel = object
+        if panel == "class":
+            return render_template(f'{panel}es.html')
+        return render_template(f'{panel}s.html')
+
+
 ########################### Admin Operations ##################################
 
 # Admin dashboard Route
@@ -289,6 +623,7 @@ def admin_dashboard():
         app.logger.debug(f"Error in admin dashboard route: {e}")
         flash("Please try again...")
         return redirect(url_for('admin_dashboard', _external=True, _scheme=secure_type))
+
 
 @app.route("/admin/admin_data", methods=["GET", "POST"])
 def admin_data_list():
@@ -1254,410 +1589,6 @@ def livechat():
     except Exception as e:
         flash("Please try again.......................................")
         return redirect(url_for('verification', _external=True, _scheme=secure_type))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-########################## Operation Route ####################################
-
-@app.route("/admin/delete_data/<object>", methods=["GET", "POST"])
-def delete_data(object):
-    """
-    That funcation can use delete from student, teacher and admin from admin panel
-    """
-
-    try:
-        spliting_object = object.split("-")
-        panel = spliting_object[0]
-        id = spliting_object[1]
-        delete_dict = {}
-        if panel == "admin":
-            coll_name = "admin_data"
-            delete_dict["admin_id"] = int(id)
-            delete_dict["type"] = "admin"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
-        elif panel == "student":
-            delete_dict["student_id"] = int(id)
-            delete_dict["type"] = "student"
-            coll_name = "students_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('student_data_list', _external=True, _scheme=secure_type))
-        elif panel == "department":
-            delete_dict["department_id"] = int(id)
-            coll_name = "department_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('department_data_list', _external=True, _scheme=secure_type))
-        elif panel == "subject":
-            delete_dict["subject_id"] = int(id)
-            coll_name = "subject_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('subject_data_list', _external=True, _scheme=secure_type))
-        else:
-            delete_dict["teacher_id"] = int(id)
-            delete_dict["type"] = "teacher"
-            coll_name = "teacher_data"
-            delete_panel_data(app, client, "college_management", coll_name, delete_dict)
-            return redirect(url_for('teacher_data_list', _external=True, _scheme=secure_type))
-
-
-    except Exception as e:
-        app.logger.debug(f"Error in delete data from database: {e}")
-        flash("Please try again...")
-        return redirect(url_for('delete_data', _external=True, _scheme=secure_type))
-
-
-@app.route("/admin/deleteall/<object>", methods=["GET", "POST"])
-def delete_all_data(object):
-    """
-    That funcation can use delete from student, teacher and admin from admin panel
-    """
-
-    try:
-        panel = object
-        panel_mapping = {
-            "admin": ("admin_data", "admin_data_list"),
-            "student": ("students_data", "student_data_list"),
-            "department": ("department_data", "department_data_list"),
-            "subject": ("subject_data", "subject_data_list"),
-        }
-
-        coll_name, data_list = panel_mapping.get(panel, ("teacher_data", "teacher_data_list"))
-        delete_result = delete_all_panel_data(app, client, "college_management", coll_name, panel)
-        if delete_result:
-            flash("All data deleted successfully")
-            return redirect(url_for(data_list, _external=True, _scheme=secure_type))
-        else:
-            flash("All records deleted...")
-            panel_mapping = {
-                "admin": "admins.html",
-                "student": "students.html",
-                "department": "departments.html",
-                "subject": "subjects.html",
-                "teacher": "teachers.html",
-                "class": "classes.html",
-            }
-            return render_template(panel_mapping[panel])
-    except Exception as e:
-        app.logger.debug(f"Error in delete data from database: {e}")
-        flash("Please try again...")
-        return redirect(url_for('delete_all_data', _external=True, _scheme=secure_type))
-
-
-@app.route("/admin/export/<object>", methods=["GET", "POST"])
-def export_data(object):
-    """
-    That funcation can use delete from student, teacher and admin from admin panel
-    """
-
-    try:
-        db = client["college_management"]
-        spliting_object = object.split("-")
-        panel = spliting_object[0]
-        type = spliting_object[1]
-        if panel == "admin":
-            res = find_all_data(app, db, "admin_data")
-            all_data = []
-            for each_res in res:
-                del each_res["_id"]
-                all_data.append(each_res)
-            output_path = export_panel_data(app, all_data, panel, type)
-            return send_file(output_path, as_attachment=True)
-        elif panel == "student":
-            res = find_all_data(app, db, "students_data")
-            all_data = []
-            for each_res in res:
-                del each_res["_id"]
-                all_data.append(each_res)
-            output_path = export_panel_data(app, all_data, panel, type)
-            return send_file(output_path, as_attachment=True)
-        elif panel == "department":
-            res = find_all_data(app, db, "department_data")
-            all_data = []
-            for each_res in res:
-                del each_res["_id"]
-                all_data.append(each_res)
-            output_path = export_panel_data(app, all_data, panel, type)
-            return send_file(output_path, as_attachment=True)
-        elif panel == "subject":
-            res = find_all_data(app, db, "subject_data")
-            all_data = []
-            for each_res in res:
-                del each_res["_id"]
-                all_data.append(each_res)
-            output_path = export_panel_data(app, all_data, panel, type)
-            return send_file(output_path, as_attachment=True)
-        else:
-            res = find_all_data(app, db, "teacher_data")
-            all_data = []
-            for each_res in res:
-                del each_res["_id"]
-                all_data.append(each_res)
-            output_path = export_panel_data(app, all_data, panel, type)
-            return send_file(output_path, as_attachment=True)
-
-
-    except Exception as e:
-        app.logger.debug(f"Error in export data from database: {e}")
-        flash("Please try again...")
-        return redirect(url_for('export_data', _external=True, _scheme=secure_type))
-
-
-@app.route("/admin/import_data/<panel_obj>", methods=["GET", "POST"])
-def import_data(panel_obj):
-    """
-    That funcation can use delete from student, teacher and admin from admin panel
-    """
-
-    try:
-        db = client["college_management"]
-        ## Check if panel object is in the mapping and request method is POST
-        ## If yes, then it will store the id type in a variable with which it will be checking for present record
-        if request.method == "POST":
-            ## Getting file from request
-            file = request.files["file"]
-            ## Checking if file is selected, if yes, secure the filename
-            if file.filename != "":
-                print(f"File name: {file.filename}")
-
-                ## Securing file and getting file extension
-                file_name = secure_filename(file.filename)
-                if not os.path.isdir(app.config['IMPORT_UPLOAD_FOLDER']):
-                    os.makedirs(app.config['IMPORT_UPLOAD_FOLDER'], exist_ok=True)
-                if not os.path.exists(app.config['REJECTED_DATA_UPLOAD_FOLDER']):
-                    os.makedirs(app.config['REJECTED_DATA_UPLOAD_FOLDER'], exist_ok=True)
-                file_path = os.path.join(app.config['IMPORT_UPLOAD_FOLDER'], file_name)
-                file.save(file_path)
-                file_extension = os.path.splitext(file_name)[1]
-
-                if file_extension == ".xlsx":
-                    dataload = pd.read_excel(file_path)
-                    json_data = dataload.to_json(orient='records')
-                elif file_extension == ".csv":
-                    dataload = pd.read_csv(file_path)
-                    json_data = dataload.to_json(orient='records')
-                else:
-                    json_data = json.loads(file_path)
-
-                print(json_data)
-
-                if panel_obj == "admin":
-                    for record in json_data:
-                        make_dict = {}
-                        make_dict["photo_link"] = record["photo_link"]
-                        make_dict["admin_id"] = record["admin_id"]
-                        make_dict["username"] = record["username"]
-                        make_dict["email"] = record["email"]
-                        make_dict["password"] = record["password"]
-                        make_dict["type"] = record["admin"]
-                        coll = db["loggin_mapping"]
-                    pass
-                elif panel_obj == "student":
-                    pass
-                else:
-                    pass
-
-
-
-
-
-
-                ## Checking if file is valid
-                file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
-                print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
-
-                ## Creating a list of query from the ids present in data to be imported
-                query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
-                print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
-                ## Checking if for each query in query_and_data_dict list, data is present already in default collection
-                ## If data is not present then send the data to import_data function
-                ## Approach 1 - Classic method
-                rejected_data = []
-                for query, value in query_and_data_dict.items():
-                    print(f"Query: {query} and type of query: {type(query)}, Value: {value} and type of value : {type(value)}")
-                    query_result = search_panel_data(app, client, "college_management", query, used_panel_obj)
-                    if query_result is None:
-                        res = import_data_into_database(app, "college_management", used_panel, value)
-                        print(f"Result: {res}")
-                    else:
-                        update_rejected_data_file(app, file_name, rejected_data)
-                return redirect(f'/admin/{panel_obj}_data')
-                # return render_template(f'{panel_obj}s.html')
-            else:
-                flash("No file selected, please select a file")
-            if panel_obj == "class":
-                return render_template(f'{panel_obj}es.html')
-            return render_template(f'{panel_obj}s.html')
-
-    except Exception as e:
-        app.logger.debug(f"Error in export data from database: {e}")
-        print(f"Error in export data from database: {e}")
-        flash("Please try again...")
-        if panel_obj == "class":
-            return render_template(f'{panel_obj}es.html')
-        return render_template(f'{panel_obj}s.html')
-
-
-@app.route("/admin/edit_data/<object>", methods=["GET", "POST"])
-def edit_data(object):
-    """
-    That funcation can use delete from student, teacher and admin from admin panel
-    """
-
-    try:
-        # We can directly assign values to panel and id variable
-        panel, id = object.split("-")
-        edit_dict = {}
-
-        # Define a mapping of panel to collection and search dictionary
-        panel_mapping = {
-            "admin": ("admin_data", {"admin_id": id, "type": "admin"}),
-            "student": ("students_data", {"student_id": id, "type": "student"}),
-            "teacher": ("teacher_data", {"teacher_id": id, "type": "teacher"}),
-        }
-
-        # Check if panel is in the mapping
-        # If it is, get the collection and search dictionary``
-        if panel in panel_mapping:
-            coll_name, edit_dict = panel_mapping[panel]
-            search_value = panel + "_id|" + id
-            edit_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
-            print(f"Search dictionary is : {edit_dict}")
-            html_page_name = f"add-{panel}.html"
-        # If it is not, set a flash message and return to the previous screen
-        else:
-            flash("Please try again...")
-            html_page_name = f"{panel}s.html"
-        print(f"Rendered html page is : {html_page_name}")
-        country_code, contact = edit_dict["contact_no"].split(" ")
-        return render_template(html_page_name,
-                               first_name=edit_dict["first_name"],
-                               last_name=edit_dict["last_name"],
-                               username=edit_dict["username"],
-                               password=edit_dict["password"],
-                               dob=edit_dict["dob"],
-                               gender=edit_dict["gender"],
-                               countrycode=country_code,
-                               contact_no=contact,
-                               emergency_contact_no=edit_dict["emergency_contact_no"],
-                               email=edit_dict["email"],
-                               address=edit_dict["address"],
-                               admission_date=edit_dict["admission_date"],
-                               city=edit_dict["city"],
-                               state=edit_dict["state"],
-                               country=edit_dict["country"],
-                               department=edit_dict["department"],
-                               classes=edit_dict["classes"],
-                               batch_year=edit_dict["batch_year"])
-
-    except Exception as e:
-        app.logger.debug(f"Error in edit data from database: {e}")
-        flash("Please try again...")
-        print(e)
-        panel = object.split("-")[0]
-        return render_template(f'{panel}s.html')
-
-
-@app.route("/search_data/<object>", methods=["GET", "POST"])
-def search_data(object):
-    """
-    That funcation can use search data from student, teacher and admin from admin panel
-    """
-
-    try:
-        login_dict = session.get("login_dict", "nothing")
-        type = login_dict["type"]
-        admin_id = login_dict["id"]
-        photo_link = "/" + login_dict["photo_link"]
-        panel = object
-        search_dict = {}
-        id = request.form.get('id', '')
-        username = request.form.get('username', '')
-        contact_no = request.form.get('contact_no', '')
-        email = request.form.get('email', '')
-        panel_mapping = {
-            "admin": "admin_data",
-            "student": "students_data",
-            "teacher": "teacher_data",
-            "department": "department_data",
-            "subject": "subject_data",
-            "class": "class_data",
-        }
-        if panel in panel_mapping:
-            print("Panel is in the mapping")
-            if panel in ["admin", "student", "teacher"]:
-                if id:
-                    search_value = f'{panel}_id|{id}'
-                elif username:
-                    search_value = f'username|{username}'
-                elif contact_no:
-                    search_value = f'contact_no|{contact_no}'
-                elif email:
-                    search_value = f'email|{email}'
-                else:
-                    app.logger.debug(f"Search field is invalid, please try with some other field...")
-                    if panel == "class":
-                        return render_template(f'{panel}es.html')
-                    return render_template(f'{panel}s.html')
-            else:
-                if id:
-                    search_value = f'{panel}_id|{id}'
-                elif username:
-                    search_value = f'department_name|{username}'
-                elif contact_no and panel in ["class"]:
-                    search_value = f'class_name|{contact_no}'
-                else:
-                    app.logger.debug(f"Search field is invalid, please try with some other field...")
-                    if panel == "class":
-                        return render_template(f'{panel}es.html')
-                    return render_template(f'{panel}s.html')
-            coll_name = panel_mapping[panel]
-            print(f"Search value is : {search_value}, coll_name is : {coll_name}")
-            search_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
-        else:
-            print("Panel is not in the mapping")
-            app.logger.debug(f"Error in searching data from database")
-        return render_template('search_result.html', panel=panel, search_dict=search_dict, type=type, admin_id=admin_id, photo_link=photo_link)
-
-    except Exception as e:
-        app.logger.debug(f"Error in searching data from database: {e}")
-        print(e)
-        flash("Please try again...")
-        panel = object
-        if panel == "class":
-            return render_template(f'{panel}es.html')
-        return render_template(f'{panel}s.html')
 
 
 if __name__ == "__main__":
