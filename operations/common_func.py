@@ -293,6 +293,33 @@ def get_admin_data(app, client, db_name, coll_name):
     except Exception as e:
         app.logger.debug(f"Error in get data from admin database: {e}")
 
+def get_profile_data(app, client, db_name, type):
+    """
+    get all data from student, admin and teacher database table
+
+    :param app: app-name
+    :param client: mongo client
+    :param db_name: database-name
+    :param coll_name: collection-name
+    :return: database_unique_keys and database_userdata
+    """
+    try:
+        if type=="admin":
+            coll_name = "admin_data"
+        elif type=="teacher":
+            coll_name = "teacher_data"
+        else:
+            coll_name = "students_data"
+
+        db = client[db_name]
+        coll = db[coll_name]
+        res = coll.find({})
+        res = list(res)
+        return res[0]
+
+    except Exception as e:
+        app.logger.debug(f"Error in get profile data for database: {e}")
+
 
 def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     """
@@ -343,6 +370,12 @@ def delete_all_panel_data(app, client, db_name, coll_name, panel):
             coll.delete_many({})
             coll1 = db["login_mapping"]
             coll1.delete_many({"type": panel})
+            if panel == "student":
+                coll_class = db["class_data"]
+                coll_class.delete_many({"type": panel})
+            elif panel=="teacher":
+                coll_class = db["subject_mapping"]
+                coll_class.delete_many({"type": panel})
             return True
         else:
             coll.delete_many({})

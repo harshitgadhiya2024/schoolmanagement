@@ -12,13 +12,14 @@ from operations.mongo_connection import (mongo_connect, data_added, find_all_dat
                                          delete_data)
 from operations.common_func import (file_check, import_data_into_database, search_panel_data, delete_all_panel_data,
                                     get_unique_subject_id, export_panel_data, delete_panel_data,
-                                    get_unique_department_id,
+                                    get_unique_department_id,get_profile_data,
                                     get_unique_admin_id, get_admin_data, validate_phone_number, password_validation,
                                     logger_con, get_timestamp, get_error_msg, get_response_msg, get_unique_student_id,
                                     get_unique_teacher_id, get_all_country_state_names, check_dirs, create_query_list,
                                     update_rejected_data_file)
 import random
 from flask_mail import Mail
+import pandas as pd
 from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 
@@ -106,41 +107,32 @@ def login():
         db = client["college_management"]
         all_types = ["Teacher", "Student", "Admin"]
         if request.method == "POST":
-            id = request.form["id"]
+            email = request.form["email"]
             password = request.form["password"]
-            type = request.form["type"]
 
-            if type == "Teacher":
-                di = {"type": "teacher", "teacher_id": int(id), "password": password}
-                teacher_data = find_spec_data(app, db, "login_mapping", di)
-                teacher_data = list(teacher_data)
-                if len(teacher_data) == 0:
-                    flash("Please use correct credential..")
-                    return render_template("login.html", all_types=all_types)
-                else:
-                    session["login_dict"] = {"id": id, "type": "Teacher"}
-                    return redirect(url_for('teacher_dashboard', _external=True, _scheme=secure_type))
-            elif type == "Student":
-                di = {"type": "student", "student_id": int(id), "password": password}
-                student_data = find_spec_data(app, db, "login_mapping", di)
-                student_data = list(student_data)
-                if len(student_data) == 0:
-                    flash("Please use correct credential..")
-                    return render_template("login.html", all_types=all_types)
-                else:
-                    session["login_dict"] = {"id": id, "type": "Student"}
-                    return redirect(url_for('student_dashboard', _external=True, _scheme=secure_type))
+            di = {"username": email, "password": password}
+            di_email = {"email": email, "password": password}
+            teacher_data = find_spec_data(app, db, "login_mapping", di)
+            teacher_data_email = find_spec_data(app, db, "login_mapping", di_email)
+            teacher_data = list(teacher_data)
+            teacher_data_email = list(teacher_data_email)
+            if len(teacher_data) == 0 and len(teacher_data_email) == 0:
+                flash("Please use correct credential..")
+                return render_template("login.html", all_types=all_types)
+            elif len(teacher_data)>0:
+                teacher_data = teacher_data[0]
+                id = teacher_data["username"]
+                type = teacher_data["type"]
+                photo_link = teacher_data["photo_link"]
+                session["login_dict"] = {"id": id, "type": type, "photo_link":photo_link}
+                return redirect(url_for(f'{type}_dashboard', _external=True, _scheme=secure_type))
             else:
-                di = {"type": "admin", "admin_id": int(id), "password": password}
-                admin_data = find_spec_data(app, db, "login_mapping", di)
-                admin_data = list(admin_data)
-                if len(admin_data) == 0:
-                    flash("Please use correct credential..")
-                    return render_template("login.html", all_types=all_types)
-                else:
-                    photo_link = admin_data[0].get("photo_link", "")
-                    session["login_dict"] = {"id": id, "type": "Admin", "photo_link": photo_link}
-                    return redirect(url_for('admin_dashboard', _external=True, _scheme=secure_type))
+                teacher_data_email = teacher_data_email[0]
+                id = teacher_data_email["username"]
+                type = teacher_data_email["type"]
+                photo_link = teacher_data_email["photo_link"]
+                session["login_dict"] = {"id": id, "type": type, "photo_link": photo_link}
+                return redirect(url_for(f'{type}_dashboard', _external=True, _scheme=secure_type))
 
         else:
             return render_template("login.html", all_types=all_types)
@@ -628,7 +620,18 @@ def admin_dashboard():
             type = "Anonymous"
             id = "anonymous"
             photo_link = "/static/assets/img/profiles/avatar-01.jpg"
-        return render_template("index.html", admin_id=id, type=type, photo_link=photo_link)
+        db = client["college_management"]
+        coll_admin = db["admin_data"]
+        coll_student = db["students_data"]
+        coll_teacher = db["teacher_data"]
+        coll_department = db["department_data"]
+        student_count = coll_student.count_documents({})
+        admin_count = coll_admin.count_documents({})
+        teacher_count = coll_teacher.count_documents({})
+        department_count = coll_department.count_documents({})
+        return render_template("index.html", admin_id=id, type=type, photo_link=photo_link,
+                               student_count=student_count, admin_count=admin_count, teacher_count=teacher_count,
+                               department_count=department_count)
 
     except Exception as e:
         app.logger.debug(f"Error in admin dashboard route: {e}")
@@ -659,6 +662,26 @@ def admin_data_list():
         app.logger.debug(f"Error in show admins data from admin panel: {e}")
         flash("Please try again..")
         return redirect(url_for('admin_data_list', _external=True, _scheme=secure_type))
+
+@app.route("/admin/admin_profile", methods=["GET", "POST"])
+def admin_profile():
+    """
+    That funcation can use show all admins data from admin panel
+    """
+
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        search_dict = get_profile_data(app, client, "college_management", type)
+        return render_template("admin_profile.html", search_dict=search_dict, type=type, admin_id=id,
+                                   photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in show admin data in profile section: {e}")
+        flash("Please try again..")
+        return redirect(url_for('admin_profile', _external=True, _scheme=secure_type))
 
 
 @app.route("/admin/add_admin", methods=["GET", "POST"])

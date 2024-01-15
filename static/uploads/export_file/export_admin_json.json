@@ -36,5 +36,24 @@
     "type": "admin",
     "inserted_on": "01-13-2024 13:03:25",
     "updated_on": "01-13-2024 13:03:25"
+  },
+  {
+    "photo_link": "static/uploads/profiles/keval72829.jpg",
+    "admin_id": 9277246204072594,
+    "username": "keval72829",
+    "first_name": "keval",
+    "last_name": "patel",
+    "password": "Har@#0401",
+    "gender": "Male",
+    "contact_no": "+91 9316727742",
+    "emergency_contact_no": "+91 9728283738",
+    "email": "harshitgadhiya8980@gmail.com",
+    "address": "ahmedabad",
+    "city": "ahmedabad",
+    "state": "Frysl\u00e2n",
+    "country": "Aruba",
+    "type": "admin",
+    "inserted_on": "01-13-2024 18:51:48",
+    "updated_on": "01-13-2024 18:51:48"
   }
 ]

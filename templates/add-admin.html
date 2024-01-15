@@ -93,6 +93,7 @@
 								<p class="text-muted mb-0">{{type}}</p>
 							</div>
 						</div>
+						<a class="dropdown-item" href="/admin/admin_profile">Admin Profile</a>
 						<a class="dropdown-item" href="/logout">Logout</a>
 					</div>
 				</li>
@@ -252,6 +253,7 @@
 												<label>Country Code <span class="login-danger">*</span></label>
 												<select name="countrycode" value="{{countrycode}}"
 													class="form-control select" required>
+													<option selected>+31</option>
 													{% for countrycode in allcountrycode %}
 													<option>{{countrycode}}</option>
 													{% endfor %}
@@ -292,6 +294,7 @@
 												<label>City <span class="login-danger">*</span></label>
 												<select name="city" value="{{city}}" class="form-control select"
 													required>
+													<option selected>Almere</option>
 													{% for city in allcity %}
 													<option>{{city}}</option>
 													{% endfor %}
@@ -303,6 +306,7 @@
 												<label>State <span class="login-danger">*</span></label>
 												<select name="state" value="{{state}}" class="form-control select"
 													required>
+													<option selected>Netherlands</option>
 													{% for state in allstate %}
 													<option>{{state}}</option>
 													{% endfor %}
@@ -314,6 +318,7 @@
 												<label>Country <span class="login-danger">*</span></label>
 												<select name="country" value="{{country}}" class="form-control select"
 													required>
+													<option selected>Europe</option>
 													{% for country in allcountry %}
 													<option>{{country}}</option>
 													{% endfor %}
