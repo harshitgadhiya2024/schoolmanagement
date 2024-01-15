@@ -415,6 +415,8 @@ def import_data(panel_obj):
     try:
         print("In import data")
         print(f"Panel Object is: {panel_obj}")
+        db = client["college_management"]
+        print(f"DB: {db}")
         ## Check if panel object is in the mapping and request method is POST
         ## If yes, then it will store the id type in a variable with which it will be checking for present record
         if request.method == "POST":
@@ -429,12 +431,21 @@ def import_data(panel_obj):
                 file_extension, file_path = check_dirs(app, file_name, file)
 
                 ## Checking if file is valid
-                file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
-                print(f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
+                if file_path:
+                    file_check_value, field_names, reader_json = file_check(app, file_extension, file_path)
+                    print(
+                        f"File check value: {file_check_value}, Field names: {field_names}, reader_json: {reader_json}")
+                else:
+                    flash("Unable to create a path to save file and upload file")
+                    return redirect(f'/admin/{panel_obj}_data')
 
                 ## Creating a list of query from the ids present in data to be imported
-                query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
-                print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
+                if file_check_value:
+                    query_and_data_dict, used_panel, used_panel_obj = create_query_list(app, panel_obj, reader_json, file_name)
+                    print(f"Used panel is {used_panel} and used panel obj is {used_panel_obj}")
+                else:
+                    flash("File is not valid, please check file for compatibility")
+                    return redirect(f'/admin/{panel_obj}_data')
                 ## Checking if for each query in query_and_data_dict list, data is present already in default collection
                 ## If data is not present then send the data to import_data function
                 ## Approach 1 - Classic method
@@ -443,7 +454,8 @@ def import_data(panel_obj):
                     print(f"Query: {query} and type of query: {type(query)}, Value: {value} and type of value : {type(value)}")
                     query_result = search_panel_data(app, client, "college_management", query, used_panel_obj)
                     if query_result is None:
-                        res = import_data_into_database(app, "college_management", used_panel, value)
+                        res = import_data_into_database(app, db, used_panel, value)
+                        flash("Record has been import successfully")
                         print(f"Result: {res}")
                     else:
                         update_rejected_data_file(app, file_name, rejected_data)
@@ -451,9 +463,7 @@ def import_data(panel_obj):
                 # return render_template(f'{panel_obj}s.html')
             else:
                 flash("No file selected, please select a file")
-            if panel_obj == "class":
-                return render_template(f'{panel_obj}es.html')
-            return render_template(f'{panel_obj}s.html')
+            return redirect(f'/admin/{panel_obj}_data')
 
     except Exception as e:
         app.logger.debug(f"Error in export data from database: {e}")
@@ -473,6 +483,18 @@ def edit_data(object):
     try:
         # We can directly assign values to panel and id variable
         panel, id = object.split("-")
+        print(f"Panel is: {panel} and id is: {id}")
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_main_link = "/" + login_dict["photo_link"]
+        db = client["college_management"]
+        # set all dynamic variable value
+        allcity = ["ahmedabad", "surat", "jamnagar", "junagadh", "navsari", "bhavnagar"]
+        allcountry, allstate, allcountrycode = get_all_country_state_names(app)
+        allbatchyear = list(range(2000, 2025))
+        allbatchyear = allbatchyear[::-1]
+        alldepartment = ["IT", "CSE", "ECE", "EEE"]
         edit_dict = {}
 
         # Define a mapping of panel to collection and search dictionary
@@ -489,6 +511,9 @@ def edit_data(object):
             search_value = panel + "_id|" + id
             edit_dict = search_panel_data(app, client, "college_management", search_value, coll_name)
             print(f"Search dictionary is : {edit_dict}")
+            emergency_contact_no = edit_dict["emergency_contact_no"].split(" ")[1]
+            contact_no = edit_dict["contact_no"].split(" ")[1]
+            print(f"emergency_contact_no: {emergency_contact_no} and contact_no: {contact_no}")
             html_page_name = f"add-{panel}.html"
         # If it is not, set a flash message and return to the previous screen
         else:
@@ -496,25 +521,14 @@ def edit_data(object):
             html_page_name = f"{panel}s.html"
         print(f"Rendered html page is : {html_page_name}")
         country_code, contact = edit_dict["contact_no"].split(" ")
-        return render_template(html_page_name,
-                               first_name=edit_dict["first_name"],
-                               last_name=edit_dict["last_name"],
-                               username=edit_dict["username"],
-                               password=edit_dict["password"],
-                               dob=edit_dict["dob"],
-                               gender=edit_dict["gender"],
-                               countrycode=country_code,
-                               contact_no=contact,
-                               emergency_contact_no=edit_dict["emergency_contact_no"],
-                               email=edit_dict["email"],
-                               address=edit_dict["address"],
-                               admission_date=edit_dict["admission_date"],
-                               city=edit_dict["city"],
-                               state=edit_dict["state"],
-                               country=edit_dict["country"],
-                               department=edit_dict["department"],
-                               classes=edit_dict["classes"],
-                               batch_year=edit_dict["batch_year"])
+        return render_template("add-student.html", allcountrycode=allcountrycode, username=edit_dict.get("username", ""),
+                               allcity=allcity, alldepartment=alldepartment,
+                               allstate=allstate, allcountry=allcountry, type=type,
+                               photo_link=edit_dict.get("photo_link", ""), photo_main_link=photo_main_link, classes=edit_dict.get("classes", ""),first_name=edit_dict.get("first_name", ""), last_name=edit_dict.get("last_name", ""),
+                               password=edit_dict.get("password", ""), countrycode=edit_dict.get("countrycode", ""),
+                               dob=edit_dict.get("dob", ""), gender=edit_dict.get("gender", ""), contact_no=contact_no,
+                               emergency_contact_no=emergency_contact_no, email=edit_dict.get("email", ""), allbatchyear=allbatchyear,
+                               address=edit_dict.get("address", ""), admission_date=edit_dict.get("admission_date", ""))
 
     except Exception as e:
         app.logger.debug(f"Error in edit data from database: {e}")

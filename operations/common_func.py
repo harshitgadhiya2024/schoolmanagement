@@ -474,16 +474,19 @@ def import_data_into_database(app, db, used_panel, reader_coll):
             register_dict[key] = reader_coll.get(key, "NA")
 
         if used_panel == "admin":
-            register_dict = {
-                "admin_id": reader_coll.get("unique_admin_id", "admin_id"),
-                "type": "admin",
+            admin_dict = {
+                "admin_id": reader_coll["admin_id"],
+                **register_dict,
+                **panel_dict[used_panel],
+                **common_dict
             }
             admin_mapping_dict = {key: reader_coll[key] for key in ["admin_id", "username", "email", "password"]}
             admin_mapping_dict["type"] = "admin"
-            [data_added(app, db, ["admin_data", "login_mapping"], [register_dict, admin_mapping_dict])]
+            [data_added(app, db, ["admin_data", "login_mapping"], [admin_dict, admin_mapping_dict])]
         elif used_panel == "student":
-            register_dict = {
-                "student_id": reader_coll.get("unique_student_id", "student_id"),
+            student_dict = {
+                "student_id": reader_coll["student_id"],
+                **register_dict,
                 "dob": reader_coll.get("dob", "NA"),
                 "admission_date": reader_coll.get("admission_date", "NA"),
                 "classes": reader_coll.get("classes", ""),
@@ -500,14 +503,12 @@ def import_data_into_database(app, db, used_panel, reader_coll):
                                     "department": reader_coll.get("department", "NA"),
                                     "class_name": reader_coll.get("class_name", "NA"),
                                     **panel_dict[used_panel]}
-            print(f"classes_mapping_dict: {classes_mapping_dict} and type: {type(classes_mapping_dict)}")
-            print(f"register_dict: {register_dict} and type: {type(register_dict)}")
-            print(f"student_mapping_dict: {student_mapping_dict} and type: {type(student_mapping_dict)}")
 
-            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["class_data", "students_data", "login_mapping"], [register_dict, classes_mapping_dict, student_mapping_dict])]
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["students_data", "class_data", "login_mapping"], [student_dict, classes_mapping_dict, student_mapping_dict])]
         elif used_panel == "teacher":
-            register_dict = {
-                "teacher_id": reader_coll.get("unique_teacher_id", "teacher_id"),
+            teacher_dict = {
+                "teacher_id": reader_coll["teacher_id"],
+                **register_dict,
                 "dob": reader_coll.get("dob", "NA"),
                 "qualification": reader_coll.get("qualification", "NA"),
                 "department": reader_coll.get("department", "NA"),
@@ -525,10 +526,10 @@ def import_data_into_database(app, db, used_panel, reader_coll):
                                     "subject": reader_coll.get("subject", "NA"),
                                     **panel_dict[used_panel]}
 
-            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["subject_mapping", "teacher_data", "login_mapping"], [subject_mapping_dict, register_dict, teacher_mapping_dict])]
+            [data_added(app, db, coll_name, new_dict)for coll_name, new_dict in zip(["subject_mapping", "teacher_data", "login_mapping"], [subject_mapping_dict, teacher_dict, teacher_mapping_dict])]
         elif used_panel == "department":
             register_dict = {
-                "department_id": reader_coll.get("unique_department_id", "department_id"),
+                "department_id": reader_coll["department_id"],
                 "department_name": reader_coll.get("department_name", "NA"),
                 "department_date": reader_coll.get("department_date", "NA"),
                 "HOD_name": reader_coll.get("HOD_name", "NA"),
@@ -539,7 +540,7 @@ def import_data_into_database(app, db, used_panel, reader_coll):
             data_added(app, db, "department_data", register_dict)
         elif used_panel == "subject":
             register_dict = {
-                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "subject_id": reader_coll["subject_id"],
                 "subject_name": reader_coll.get("subject_name", "NA"),
                 "department_name": reader_coll.get("department_name", "NA"),
                 "subject_start_date": reader_coll.get("subject_start_date", "NA"),
@@ -549,8 +550,9 @@ def import_data_into_database(app, db, used_panel, reader_coll):
             data_added(app, db, "subject_data", register_dict)
         else:
             register_dict = {
-                "subject_id": reader_coll.get("unique_subject_id", "subject_id"),
+                "student_id": reader_coll["student_id"],
                 "subject_name": reader_coll.get("subject_name", "NA"),
+                "class_name": reader_coll.get("class_name", "NA"),
                 "department_name": reader_coll.get("department_name", "NA"),
                 "subject_start_date": reader_coll.get("subject_start_date", "NA"),
                 **panel_dict[used_panel],
@@ -666,6 +668,7 @@ def check_dirs(app, file_name, file):
         file_path = os.path.join(app.config['IMPORT_UPLOAD_FOLDER'], file_name)
         file.save(file_path)
         file_extension = os.path.splitext(file_name)[1]
+        app.logger.debug(f"Directory paths are present")
         return file_extension, file_path
     except Exception as e:
         print(f"Error in creating dirs: {e}")

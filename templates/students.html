@@ -279,7 +279,8 @@
 												{% endfor %}
 												<td class="text-end">
 													<div class="actions">
-														<a href="/admin/edit_data/student-{{value[1]}}" class="btn btn-sm bg-danger-light">
+<!--														Need to ask for change here from {{value[1]}} to {{value[0]}}-->
+														<a href="/admin/edit_data/student-{{value[0]}}" class="btn btn-sm bg-danger-light">
 															<i class="feather-edit"></i>
 														</a>
 														<a href="/admin/delete_data/student-{{value[1]}}" class="btn btn-sm bg-danger-light">
