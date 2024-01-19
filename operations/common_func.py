@@ -71,7 +71,8 @@ def get_error_msg(app, e):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
-def get_response_msg(app,status, statuscode, message, data):
+
+def get_response_msg(app, status, statuscode, message, data):
     """
     Get success response with formatting
 
@@ -96,6 +97,7 @@ def get_response_msg(app,status, statuscode, message, data):
 
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
+
 
 def get_unique_student_id(app, all_student_id):
     """
