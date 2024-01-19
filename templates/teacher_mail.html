@@ -178,8 +178,8 @@
 							<a href="#"><i class="fas fa-book-reader"></i> <span> Email Service</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/email_sending" class="active">All In One</a></li>
-								<li><a href="/teacher_mail">With Teacher</a></li>
+								<li><a href="/email_sending">All In One</a></li>
+								<li><a href="/teacher_mail" class="active">With Teacher</a></li>
 								<li><a href="/import_mail">With import file</a></li>
 								<li><a href="/department_mail">With Department</a></li>
 								<li><a href="/email_mail">With Email</a></li>
@@ -222,44 +222,15 @@
 					<div class="col-sm-12">
 						<div class="card comman-shadow">
 							<div class="card-body">
-								<form action="/email_sending" method="POST" enctype="multipart/form-data">
+								<form action="/teacher_mail" method="POST" enctype="multipart/form-data">
 									<div class="row">
 										<div class="col-12">
 											<h5 class="form-title student-info">Admin Email Sending</h5>
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>E-Mail</label>
-												<input class="form-control" name="email" value="{{email}}" type="email"
-													placeholder="Enter Email Address">
-											</div>
-										</div>
-										<div class="col-12 col-sm-4">
-											<div class="form-group local-forms">
-												<label>Department</label>
-												<select name="department" value="{{department}}" class="form-control select">
-													<option selected>Select Department</option>
-													{% for department in alldepartment %}
-													<option>{{department}}</option>
-													{% endfor %}
-												</select>
-											</div>
-										</div>
-										<div class="col-12 col-sm-4">
-											<div class="form-group local-forms">
-												<label>Student</label>
-												<select name="student" value="{{student}}" class="form-control select">
-													<option selected>Select Student</option>
-													{% for student in allstudent %}
-													<option>{{student}}</option>
-													{% endfor %}
-												</select>
-											</div>
-										</div>
-										<div class="col-12 col-sm-4">
-											<div class="form-group local-forms">
-												<label>Teacher</label>
-												<select name="teacher" value="{{teacher}}" class="form-control select">
+												<label>Teacher <span class="login-danger">*</span></label>
+												<select name="teacher" value="{{teacher}}" class="form-control select" required>
 													<option selected>Select Teacher</option>
 													{% for teacher in allteacher %}
 													<option>{{teacher}}</option>
@@ -269,38 +240,15 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Classes</label>
-												<select name="classes" value="{{classes}}" class="form-control select">
-													<option selected>Select Class</option>
-													<option>A</option>
-													<option>B</option>
-													<option>C</option>
-													<option>D</option>
-												</select>
-											</div>
-										</div>
-										<div class="col-12 col-sm-4">
-											<div class="form-group local-forms">
-												<label>Subject<span class="login-danger">*</span></label>
+												<label>Subject <span class="login-danger">*</span></label>
 												<input class="form-control" name="topic" value="{{topic}}" type="text"
 													placeholder="Enter Subject Title" required>
 											</div>
 										</div>
 										<div class="col-12 col-sm-12">
 											<div class="form-group local-forms">
-												<label>Mail Message<span class="login-danger">*</span></label>
-												<textarea rows="5" cols="5" name="mail_format" class="form-control" placeholder="Enter Your Mail Message Formet" spellcheck="false" required></textarea>
-											</div>
-										</div>
-										
-										<div class="col-12 col-sm-4">
-											<div class="form-group students-up-files">
-												<label>Import Email File (Supported: CSV, EXCEL & JSON)</label>
-												<div class="uplod">
-													<label class="file-upload image-upbtn mb-0">
-														Choose File <input type="file" name="email_file" autocomplete="off">
-													</label>
-												</div>
+												<label>Mail Message <span class="login-danger">*</span></label>
+												<textarea rows="5" cols="5" name="mail_format" class="form-control" value="{{mail_format}}" placeholder="Enter Your Mail Message Formet" spellcheck="false" required></textarea>
 											</div>
 										</div>
 										<div class="col-12">

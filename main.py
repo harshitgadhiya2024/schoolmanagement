@@ -2680,7 +2680,338 @@ def email_sending():
         flash("Please try again...")
         return redirect(url_for('email_sending', _external=True, _scheme=secure_type))
 
+@app.route("/teacher_mail", methods=["GET", "POST"])
+def teacher_mail():
+    """
+    Handling teacher register process
+    :return: teacher register template
+    """
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        db = client["college_management"]
+        teacher_data = find_all_data(app, db, "teacher_data")
+        allteacher = [tea["username"] for tea in teacher_data]
+        if request.method == "POST":
+            teacher = request.form["teacher"]
+            subject_title = request.form["topic"]
+            mail_format = request.form["mail_format"]
+            teacher_flag = False
 
+            if teacher == "Select Teacher":
+                flash("Please select correct teacher name...")
+                return render_template("teacher_mail.html", topic=subject_title, mail_format=mail_format,
+                                       allteacher=allteacher, type=type, admin_id=admin_id,
+                                       photo_link=photo_link)
+
+            mail_split = mail_format.split("\n")
+            all_message_list = []
+            for message in mail_split:
+                if message != "\r":
+                    message = message.replace("\r", "")
+                    all_message_list.append(message)
+            html_format = ""
+            for msg in all_message_list:
+                html_format = html_format + "<p>" + msg + "</p>"
+
+
+            if not teacher_flag:
+                condition_dict = {"username": teacher, "type": "teacher"}
+                teacher_data = find_spec_data(app, db, "login_mapping", condition_dict)
+                email_data = [tea["email"] for tea in teacher_data]
+                mail.send_message(subject_title,
+                                  sender="harshitgadhiya8980@gmail.com",
+                                  recipients=email_data,
+                                  body=mail_format,
+                                  html=html_format)
+                flash("Mail sent successfully...")
+                return redirect(url_for('teacher_mail', _external=True, _scheme=secure_type))
+        else:
+            return render_template("teacher_mail.html", allteacher=allteacher, type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in add teacher data route: {e}")
+        flash("Please try again...")
+        return redirect(url_for('teacher_mail', _external=True, _scheme=secure_type))
+
+@app.route("/import_mail", methods=["GET", "POST"])
+def import_mail():
+    """
+    Handling teacher register process
+    :return: teacher register template
+    """
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        if request.method == "POST":
+            email_file = request.files.get("email_file")
+            subject_title = request.form["topic"]
+            mail_format = request.form["mail_format"]
+            email_message = ""
+            file_flag = False
+
+            if 'email_file' not in request.files:
+                flash("Please import file...")
+                return render_template("import_mail.html", topic=subject_title, type=type, admin_id=admin_id, photo_link=photo_link)
+
+            if email_file.filename == '':
+                flash("Please import file...")
+                return render_template("import_mail.html", topic=subject_title, type=type, admin_id=admin_id, photo_link=photo_link)
+
+            filename = email_file.filename
+            exten = filename.split(".")[-1]
+            if exten not in ["csv", "xlsx", "json"]:
+                flash("Please import only CSV, JSON & EXCEL file...")
+                return render_template("import_mail.html", topic=subject_title, type=type, admin_id=admin_id, photo_link=photo_link)
+
+            if file_flag == False:
+                email_file.save(os.path.join(app.config["IMPORT_UPLOAD_FOLDER"], filename))
+                email_file_path = os.path.join(app.config["IMPORT_UPLOAD_FOLDER"], filename)
+                if exten == "xlsx":
+                    df = pd.read_excel(email_file_path)
+                    if int(df.shape[0])==0:
+                        file_flag = True
+                        email_message = "Please add data into your file"
+                elif exten == "csv":
+                    df = pd.read_csv(email_file_path)
+                    if int(df.shape[0]) == 0:
+                        file_flag = True
+                        email_message = "Please add data into your file"
+                elif exten == "json":
+                    with open(email_file_path, encoding='utf-8') as json_file:
+                        json_data = json.load(json_file)
+                    get_data = json_data.get("Emails", [])
+                    if len(get_data)==0:
+                        file_flag = True
+                        email_message = "Please add data into your file"
+
+            mail_split = mail_format.split("\n")
+            all_message_list = []
+            for message in mail_split:
+                if message != "\r":
+                    message = message.replace("\r", "")
+                    all_message_list.append(message)
+            html_format = ""
+            for msg in all_message_list:
+                html_format = html_format + "<p>" + msg + "</p>"
+
+            if not file_flag:
+                if exten=="csv":
+                    get_all_mail = list(df["Email"])
+                    mail.send_message(subject_title,
+                                      sender="harshitgadhiya8980@gmail.com",
+                                      recipients=get_all_mail,
+                                      body=mail_format,
+                                      html=html_format)
+                elif exten=="xlsx":
+                    get_all_mail = list(df["Email"])
+                    mail.send_message(subject_title,
+                                      sender="harshitgadhiya8980@gmail.com",
+                                      recipients=get_all_mail,
+                                      body=mail_format,
+                                      html=html_format)
+                elif exten=="json":
+                    mail.send_message(subject_title,
+                                      sender="harshitgadhiya8980@gmail.com",
+                                      recipients=get_data,
+                                      body=mail_format,
+                                      html=html_format)
+
+            if email_message:
+                flash(email_message)
+            else:
+                flash("Mail sent successfully...")
+            return redirect(url_for('import_mail', _external=True, _scheme=secure_type))
+        else:
+            return render_template("import_mail.html", type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in add teacher data route: {e}")
+        flash("Please try again...")
+        return redirect(url_for('import_mail', _external=True, _scheme=secure_type))
+
+@app.route("/department_mail", methods=["GET", "POST"])
+def department_mail():
+    """
+    Handling teacher register process
+    :return: teacher register template
+    """
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        db = client["college_management"]
+        department_data = find_all_data(app, db, "department_data")
+        alldepartment = [department["department_name"] for department in department_data]
+        if request.method == "POST":
+            classes = request.form["classes"]
+            department = request.form["department"]
+            subject_title = request.form["topic"]
+            mail_format = request.form["mail_format"]
+            email_message = ""
+            department_flag = False
+            class_flag = False
+
+            if department == "Select Department":
+                flash("Please select department first...")
+                return render_template("department_mail.html", topic=subject_title, alldepartment=alldepartment, type=type,
+                                       admin_id=admin_id, photo_link=photo_link)
+
+            if classes == "Select Class":
+                flash("Please select class...")
+                return render_template("department_mail.html", topic=subject_title, alldepartment=alldepartment,
+                                       type=type, admin_id=admin_id, photo_link=photo_link)
+
+            mail_split = mail_format.split("\n")
+            all_message_list = []
+            for message in mail_split:
+                if message != "\r":
+                    message = message.replace("\r", "")
+                    all_message_list.append(message)
+            html_format = ""
+            for msg in all_message_list:
+                html_format = html_format + "<p>" + msg + "</p>"
+
+            if not class_flag:
+                if not department_flag:
+                    condition_dict = {"department": department, "classes": classes}
+                    students_data = find_spec_data(app, db, "students_data", condition_dict)
+                    email_data = [stu["email"] for stu in students_data]
+                    if email_data:
+                        mail.send_message(subject_title,
+                                          sender="harshitgadhiya8980@gmail.com",
+                                          recipients=email_data,
+                                          body=mail_format,
+                                          html=html_format)
+                else:
+                    email_message = "Please select department when are you select class"
+
+            if email_message:
+                flash(email_message)
+            else:
+                flash("Mail sent successfully...")
+            return redirect(url_for('department_mail', _external=True, _scheme=secure_type))
+        else:
+            return render_template("department_mail.html", alldepartment=alldepartment, type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in add teacher data route: {e}")
+        flash("Please try again...")
+        return redirect(url_for('department_mail', _external=True, _scheme=secure_type))
+
+@app.route("/email_mail", methods=["GET", "POST"])
+def email_mail():
+    """
+    Handling teacher register process
+    :return: teacher register template
+    """
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        if request.method == "POST":
+            email = request.form["email"]
+            subject_title = request.form["topic"]
+            mail_format = request.form["mail_format"]
+            email_message = ""
+            email_flag = False
+
+            if email == "":
+                return render_template("email_mail.html", topic=subject_title, type=type, admin_id=admin_id, photo_link=photo_link)
+
+            mail_split = mail_format.split("\n")
+            all_message_list = []
+            for message in mail_split:
+                if message != "\r":
+                    message = message.replace("\r", "")
+                    all_message_list.append(message)
+            html_format = ""
+            for msg in all_message_list:
+                html_format = html_format + "<p>" + msg + "</p>"
+
+            if not email_flag:
+                mail.send_message(subject_title,
+                                  sender="harshitgadhiya8980@gmail.com",
+                                  recipients=[email],
+                                  body=mail_format,
+                                  html=html_format)
+
+            if email_message:
+                flash(email_message)
+            else:
+                flash("Mail sent successfully...")
+            return redirect(url_for('email_mail', _external=True, _scheme=secure_type))
+        else:
+            return render_template("email_mail.html", type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in add teacher data route: {e}")
+        flash("Please try again...")
+        return redirect(url_for('email_mail', _external=True, _scheme=secure_type))
+
+@app.route("/student_mail", methods=["GET", "POST"])
+def student_mail():
+    """
+    Handling teacher register process
+    :return: teacher register template
+    """
+    try:
+        login_dict = session.get("login_dict", "nothing")
+        type = login_dict["type"]
+        admin_id = login_dict["id"]
+        photo_link = "/" + login_dict["photo_link"]
+        db = client["college_management"]
+        student_data = find_all_data(app, db, "students_data")
+        allstudent = [stu["username"] for stu in student_data]
+        if request.method == "POST":
+            student = request.form["student"]
+            subject_title = request.form["topic"]
+            mail_format = request.form["mail_format"]
+            email_message = ""
+            student_flag = False
+            if student == "Select Student":
+                flash("Please selete student...")
+                return render_template("student_mail.html",topic=subject_title, allstudent=allstudent, type=type, admin_id=admin_id,
+                                       photo_link=photo_link)
+
+            mail_split = mail_format.split("\n")
+            all_message_list = []
+            for message in mail_split:
+                if message != "\r":
+                    message = message.replace("\r", "")
+                    all_message_list.append(message)
+            html_format = ""
+            for msg in all_message_list:
+                html_format = html_format + "<p>" + msg + "</p>"
+
+            if not student_flag:
+                condition_dict = {"username": student, "type": "student"}
+                student_data = find_spec_data(app, db, "login_mapping", condition_dict)
+                email_data = [stu["email"] for stu in student_data]
+                mail.send_message(subject_title,
+                                  sender="harshitgadhiya8980@gmail.com",
+                                  recipients=email_data,
+                                  body=mail_format,
+                                  html=html_format)
+
+            if email_message:
+                flash(email_message)
+            else:
+                flash("Mail sent successfully...")
+            return redirect(url_for('student_mail', _external=True, _scheme=secure_type))
+        else:
+            return render_template("student_mail.html", allstudent=allstudent, type=type, admin_id=admin_id, photo_link=photo_link)
+
+    except Exception as e:
+        app.logger.debug(f"Error in add teacher data route: {e}")
+        flash("Please try again...")
+        return redirect(url_for('student_mail', _external=True, _scheme=secure_type))
 
 
 if __name__ == "__main__":
