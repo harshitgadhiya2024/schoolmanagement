@@ -20,7 +20,6 @@ from operations.common_func import (file_check,export_student_panel_data, get_st
 import random
 from flask_mail import Mail
 import pandas as pd
-from flask_ngrok import run_with_ngrok
 from werkzeug.utils import secure_filename
 
 # create a flask app instance
@@ -28,7 +27,6 @@ app = Flask(__name__)
 
 # Apply cors policy in our app instance
 CORS(app)
-# run_with_ngrok(app)
 
 # setup all config variable
 app.config["enviroment"] = constant_data.get("enviroment", "qa")
