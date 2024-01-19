@@ -159,13 +159,6 @@
 								<li><a href="/admin/classes_data" class="active">Classes List</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-book-reader"></i> <span> Attendance</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/attendance_data">Attendance List</a></li>
-							</ul>
-						</li>
 					</ul>
 				</div>
 			</div>
@@ -220,7 +213,7 @@
 												<h3 class="page-title">Classes</h3>
 											</div>
 											<div class="col-auto text-end float-end ms-auto download-grp">
-												<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
+												<!-- <button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
 													data-bs-toggle="dropdown" aria-expanded="false">
 													<i class="fa fa-download"></i> Import
 												</button>
@@ -240,7 +233,7 @@
 													<li><a class="dropdown-item" href="/admin/export/department-excel">EXCEL</a></li>
 													<li><a class="dropdown-item" href="/admin/export/department-csv">CSV</a></li>
 													<li><a class="dropdown-item" href="/admin/export/department-json">JSON</a></li>
-												</ul>
+												</ul> -->
 											</div>
 										</div>
 									</div>
@@ -257,7 +250,6 @@
 												{% for key in all_keys %}
 												<th>{{key}}</th>
 												{% endfor %}
-												<th class="text-end">Action</th>
 											</tr>
 										</thead>
 										<tbody>
@@ -271,16 +263,6 @@
 												{% for each_value in value %}
 												<td>{{each_value}}</td>
 												{% endfor %}
-												<td class="text-end">
-													<div class="actions">
-														<a href="/admin/edit_data/classes-{{value[0]}}" class="btn btn-sm bg-danger-light">
-															<i class="feather-edit"></i>
-														</a>
-														<a href="/admin/delete_data/classes-{{value[0]}}" class="btn btn-sm bg-danger-light">
-															<i class="fas fa-trash-alt"></i>
-														</a>
-													</div>
-												</td>
 											</tr>
 											{% endfor %}
 										</tbody>

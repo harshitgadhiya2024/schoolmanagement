@@ -4,15 +4,15 @@
 
 enviroment = {
     "prod": {
-        "Mongourl": "mongodb+srv://jaykakadiyawork:FB30fRUM8DV0U1xk@cluster0.wwspsfj.mongodb.net/?retryWrites=true&w=majority",
+        "Mongourl": "mongodb+srv://harshitgadhiya8980:harshitgadhiya8980@cluster0.xradpzd.mongodb.net/",
     },
     "qa": {
-        "Mongourl": "mongodb+srv://jaykakadiyawork:FB30fRUM8DV0U1xk@cluster0.wwspsfj.mongodb.net/?retryWrites=true&w=majority",
+        "Mongourl": "mongodb+srv://harshitgadhiya8980:harshitgadhiya8980@cluster0.xradpzd.mongodb.net/",
     },
     "stagging": {
-        "Mongourl": "mongodb+srv://jaykakadiyawork:FB30fRUM8DV0U1xk@cluster0.wwspsfj.mongodb.net/?retryWrites=true&w=majority",
+        "Mongourl": "mongodb+srv://harshitgadhiya8980:harshitgadhiya8980@cluster0.xradpzd.mongodb.net/",
     },
     "development": {
-        "Mongourl": "mongodb+srv://jaykakadiyawork:FB30fRUM8DV0U1xk@cluster0.wwspsfj.mongodb.net/?retryWrites=true&w=majority",
+        "Mongourl": "mongodb+srv://harshitgadhiya8980:harshitgadhiya8980@cluster0.xradpzd.mongodb.net/",
     }
 }

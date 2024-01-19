@@ -167,13 +167,6 @@
 								<li><a href="/admin/classes_data">Classes List</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-book-reader"></i> <span> Attendance</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/attendance_data">Attendance List</a></li>
-							</ul>
-						</li>
 					</ul>
 				</div>
 			</div>
@@ -240,7 +233,7 @@
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
 												<label>Password <span class="login-danger">*</span></label>
-												<input class="form-control pass-input" value="{{password}}" name="password" type="text" required>
+												<input class="form-control pass-input" value="{{password}}" name="password" type="password" required>
 												<span class="profile-views feather-eye toggle-password"></span>
 											</div>
 										</div>
@@ -267,6 +260,7 @@
 												<label>Country Code <span class="login-danger">*</span></label>
 												<select name="countrycode" value="{{countrycode}}"
 													class="form-control select" required>
+													<option selected>+31</option>
 													{% for countrycode in allcountrycode %}
 													<option>{{countrycode}}</option>
 													{% endfor %}
@@ -275,14 +269,14 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Phone-Number  <span class="login-danger">*</span></label>
+												<label>Phone-Number <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{contact_no}}" name="contact_no"
 													type="number" placeholder="Enter Phone Number" required>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>Emergency Phone-Number  <span class="login-danger">*</span></label>
+												<label>Emergency Phone-Number <span class="login-danger">*</span></label>
 												<input class="form-control" value="{{emergency_contact_no}}"
 													name="emer_contact_no" type="number"
 													placeholder="Enter Emergency Phone Number" required>
@@ -313,7 +307,7 @@
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
 												<label>City <span class="login-danger">*</span></label>
-												<select name="city" value="{{city}}" class="form-control select"
+												<select id="city" name="city" value="{{city}}" class="form-control select" onchange="getProvince()"
 													required>
 													{% for city in allcity %}
 													<option>{{city}}</option>
@@ -323,24 +317,8 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group local-forms">
-												<label>State <span class="login-danger">*</span></label>
-												<select name="state" value="{{state}}" class="form-control select"
-													required>
-													{% for state in allstate %}
-													<option>{{state}}</option>
-													{% endfor %}
-												</select>
-											</div>
-										</div>
-										<div class="col-12 col-sm-4">
-											<div class="form-group local-forms">
-												<label>Country <span class="login-danger">*</span></label>
-												<select name="country" value="{{country}}" class="form-control select"
-													required>
-													{% for country in allcountry %}
-													<option>{{country}}</option>
-													{% endfor %}
-												</select>
+												<label>Province <span class="login-danger">*</span></label>
+												<input type="text" id="province" value="{{province}}" class="form-control" name="province" readonly required>
 											</div>
 										</div>
 										<div class="col-12 col-sm-4">
@@ -379,7 +357,7 @@
 										</div>
 										<div class="col-12 col-sm-4">
 											<div class="form-group students-up-files">
-												<label>Upload Student Photo (150px X 150px)</label>
+												<label>Upload Admin Photo (150px X 150px)</label>
 												<div class="uplod">
 													<label class="file-upload image-upbtn mb-0">
 														Choose File <input type="file" name="photo_link" autocomplete="off" required>
@@ -404,6 +382,22 @@
 
 	</div>
 	<!-- /Main Wrapper -->
+	<script>
+        function getProvince() {
+            var selectedCity = document.getElementById("city").value;
+
+            // Make an AJAX request to the server
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    // Update the province field with the response from the server
+                    document.getElementById("province").value = this.responseText;
+                }
+            };
+            xhr.open("GET", "/get_province?city=" + selectedCity, true);
+            xhr.send();
+        }
+    </script>
 
 	<!-- jQuery -->
 	<script src="/static/assets/js/jquery-3.7.1.min.js"></script>

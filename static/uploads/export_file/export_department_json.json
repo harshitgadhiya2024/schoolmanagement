@@ -1,20 +1,92 @@
 [
   {
-    "department_id": 151432,
-    "department_name": "Standard-8",
-    "department_date": "01-06-2019",
-    "HOD_name": "Jay Kakadiya",
+    "department_id": "561806",
+    "department_name": "Standard-7",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
     "type": "department",
-    "inserted_on": "01-05-2024 11:01:19",
-    "updated_on": "01-05-2024 11:01:20"
+    "inserted_on": "01-18-2024 18:20:49",
+    "updated_on": "01-18-2024 18:20:49"
   },
   {
-    "department_id": 633420,
-    "department_name": "Standard-7",
-    "department_date": "01-01-2024",
-    "HOD_name": "Jay Kakadiya",
+    "department_id": "512328",
+    "department_name": "Standard-8",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
     "type": "department",
-    "inserted_on": "01-06-2024 18:01:01",
-    "updated_on": "01-06-2024 18:01:01"
+    "inserted_on": "01-18-2024 18:21:31",
+    "updated_on": "01-18-2024 18:21:31"
+  },
+  {
+    "department_id": "889449",
+    "department_name": "Standard-9",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:21:41",
+    "updated_on": "01-18-2024 18:21:41"
+  },
+  {
+    "department_id": "914565",
+    "department_name": "Standard-10",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:21:53",
+    "updated_on": "01-18-2024 18:21:53"
+  },
+  {
+    "department_id": "656281",
+    "department_name": "11-science",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:22:21",
+    "updated_on": "01-18-2024 18:22:21"
+  },
+  {
+    "department_id": "893803",
+    "department_name": "12-science",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:22:36",
+    "updated_on": "01-18-2024 18:22:36"
+  },
+  {
+    "department_id": "344564",
+    "department_name": "11-commerce",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:22:53",
+    "updated_on": "01-18-2024 18:22:53"
+  },
+  {
+    "department_id": "916158",
+    "department_name": "12-commerce",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:23:11",
+    "updated_on": "01-18-2024 18:23:11"
+  },
+  {
+    "department_id": "491095",
+    "department_name": "11-arts",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:23:45",
+    "updated_on": "01-18-2024 18:23:45"
+  },
+  {
+    "department_id": "205671",
+    "department_name": "12-arts",
+    "department_date": "18-01-2024",
+    "HOD_name": "jay patel",
+    "type": "department",
+    "inserted_on": "01-18-2024 18:24:00",
+    "updated_on": "01-18-2024 18:24:00"
   }
 ]

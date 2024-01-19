@@ -5,11 +5,8 @@
 <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-        <title>Portal - Department</title>
+        <title>Portal - Attendance</title>
 		
-		<!-- Favicon -->
-        <link rel="shortcut icon" href="/static/assets/img/favicon.png">
-	
 		<!-- Fontfamily -->
 		<link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&amp;display=swap" rel="stylesheet">
 		
@@ -28,6 +25,9 @@
 		<!-- Fontawesome CSS -->
 		<link rel="stylesheet" href="/static/assets/plugins/fontawesome/css/fontawesome.min.css">
 		<link rel="stylesheet" href="/static/assets/plugins/fontawesome/css/all.min.css">
+
+		<!-- Select CSS -->
+		<link rel="stylesheet" href="/static/assets/plugins/select2/css/select2.min.css">
 		
 		<!-- Main CSS -->
         <link rel="stylesheet" href="/static/assets/css/style.css">
@@ -71,7 +71,7 @@
 						<div class="user-img">
 							<img class="rounded-circle" src="{{photo_link}}" width="31" alt="Ryan Taylor">
 							<div class="user-text">
-								<h6>{{admin_id}}</h6>
+								<h6>{{teacher_id}}</h6>
 								<p class="text-muted mb-0">{{type}}</p>
 							</div>
 						</div>
@@ -82,11 +82,11 @@
 								<img src="{{photo_link}}" alt="User Image" class="avatar-img rounded-circle">
 							</div>
 							<div class="user-text">
-								<h6>{{admin_id}}</h6>
+								<h6>{{teacher_id}}</h6>
 								<p class="text-muted mb-0">{{type}}</p>
 							</div>
 						</div>
-						<a class="dropdown-item" href="/admin/admin_profile">Admin Profile</a>
+						<a class="dropdown-item" href="/teacher/teacher_profile">Teacher Profile</a>
 						<a class="dropdown-item" href="/logout">Logout</a>
 					</div>
 				</li>
@@ -110,54 +110,15 @@
 							<a href="#"><i class="feather-grid"></i> <span> Dashboard</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin_dashboard">Admin Dashboard</a></li>
+								<li><a href="/teacher_dashboard">Teacher Dashboard</a></li>
 							</ul>
 						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-user-cog"></i> <span> Admins</span> <span
+						<li class="submenu active">
+							<a href="#"><i class="fas fa-user-cog"></i> <span> Attendance</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/admin_data">Admin List</a></li>
-								<li><a href="/admin/add_admin">Admin Add</a></li>
-							</ul>
-						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-graduation-cap"></i> <span> Students</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/student_data">Student List</a></li>
-								<li><a href="/admin/add_student">Student Add</a></li>
-							</ul>
-						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-chalkboard-teacher"></i> <span> Teachers</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/teacher_data">Teacher List</a></li>
-								<li><a href="/admin/add_teacher">Teacher Add</a></li>
-							</ul>
-						</li>
-						<li class="submenu active" >
-							<a href="#"><i class="fas fa-building"></i> <span> Departments</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/department_data">Department List</a></li>
-								<li><a href="/admin/add_department" class="active">Department Add</a></li>
-							</ul>
-						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-book-reader"></i> <span> Subjects</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/subject_data">Subject List</a></li>
-								<li><a href="/admin/add_subject">Subject Add</a></li>
-							</ul>
-						</li>
-						<li class="submenu">
-							<a href="#"><i class="fas fa-book-reader"></i> <span> Classes</span> <span
-									class="menu-arrow"></span></a>
-							<ul>
-								<li><a href="/admin/classes_data">Classes List</a></li>
+								<li><a href="/teacher/attendance_data">Attendance List</a></li>
+								<li><a href="/teacher/add_attendance"  class="active">Attendance Add</a></li>
 							</ul>
 						</li>
 					</ul>
@@ -196,31 +157,74 @@
 						<div class="col-sm-12">
 							<div class="card">
 								<div class="card-body">
-									<form action="/admin/add_department" method="POST" enctype="multipart/form-data">
+									<form action="/teacher/add_attendance" method="POST" enctype="multipart/form-data">
 										<div class="row">
 											<div class="col-12">
-												<h5 class="form-title"><span>Departments Information</span></h5>
+												<h5 class="form-title"><span>Attendance Information</span></h5>
 											</div>
 											<div class="col-12 col-sm-4">
+                                                <div class="form-group local-forms">
+                                                    <label>Student Name <span class="login-danger">*</span></label>
+                                                    <select id="student" name="student" value="{{student}}" class="form-control select"
+                                                        required>
+                                                        {% for student in allstudents %}
+                                                        <option>{{student}}</option>
+                                                        {% endfor %}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-12 col-sm-4">
 												<div class="form-group local-forms">
-													<label>Department Name <span class="login-danger">*</span></label>
-													<input class="form-control" name="department_name" value="{{department_name}}"
-														type="text" placeholder="Enter Department Name" required>
-												</div>
-											</div>
-											<div class="col-12 col-sm-4">
-												<div class="form-group local-forms">
-													<label>HOD Name <span class="login-danger">*</span></label>
-													<input class="form-control" name="hod_name" value="{{hod_name}}"
-														type="text" placeholder="Enter HOD Name" required>
-												</div>
-											</div>
-											<div class="col-12 col-sm-4">
-												<div class="form-group local-forms calendar-icon">
-													<label>Department Start-Date <span class="login-danger">*</span></label>
-													<input class="form-control datetimepicker" name="department_date"
-														value="{{department_date}}" type="text" placeholder="DD-MM-YYYY"
+													<label>Department <span class="login-danger">*</span></label>
+													<select name="department" value="{{department}}" class="form-control select"
 														required>
+														{% for department in alldepartment %}
+														<option>{{department}}</option>
+														{% endfor %}
+													</select>
+												</div>
+											</div>
+                                            <div class="col-12 col-sm-4">
+												<div class="form-group local-forms">
+													<label>Class <span class="login-danger">*</span></label>
+													<select name="class" value="{{class}}" class="form-control select"
+														required>
+														<option>A</option>
+                                                        <option>B</option>
+                                                        <option>C</option>
+                                                        <option>D</option>
+													</select>
+												</div>
+											</div>
+											<div class="col-12 col-sm-4">
+												<div class="form-group local-forms">
+													<label>Teacher Name <span class="login-danger">*</span></label>
+													<input class="form-control" name="teacher_name" value="{{teacher_id}}"
+														type="text" placeholder="Enter Teacher Name" required>
+												</div>
+											</div>
+                                            <div class="col-12 col-sm-4">
+												<div class="form-group local-forms calendar-icon">
+													<label>Attendance Date <span class="login-danger">*</span></label>
+													<input class="form-control datetimepicker" type="text" name="attendance_date"
+														value="{{attendance_date}}" placeholder="DD-MM-YYYY" required>
+												</div>
+											</div>
+                                            <div class="col-12 col-sm-4">
+												<div class="form-group local-forms">
+													<label>Status <span class="login-danger">*</span></label>
+													<select name="status" value="{{status}}" class="form-control select"
+														required>
+														<option>Absent</option>
+                                                        <option>Present</option>
+													</select>
+												</div>
+											</div>
+                                            <div class="col-12 col-sm-4">
+												<div class="form-group local-forms">
+													<label>Reason</label>
+													<input class="form-control" name="reason" value="{{reason}}"
+														type="text" placeholder="Enter Reason">
 												</div>
 											</div>
 											<div class="col-12">
@@ -253,12 +257,15 @@
 		<script src="/static/assets/js/feather.min.js"></script>
 		
 		<!-- Slimscroll JS -->
-		<script src="/static/assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+        <script src="/static/assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+
+        <!-- Select2 JS -->
+		<script src="/static/assets/plugins/select2/js/select2.min.js"></script>
 		
 		<!-- Datepicker Core JS -->
 		<script src="/static/assets/plugins/moment/moment.min.js"></script>
 		<script src="/static/assets/js/bootstrap-datetimepicker.min.js"></script>
-
+		
 		<!-- Custom JS -->
 		<script src="/static/assets/js/script.js"></script>
 		
