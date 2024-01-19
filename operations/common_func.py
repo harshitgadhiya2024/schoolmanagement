@@ -14,6 +14,8 @@ import pycountry
 import csv
 import openpyxl
 
+from operations.mongo_connection import data_added
+
 
 def logger_con(app):
     """
@@ -28,6 +30,7 @@ def logger_con(app):
 
     except Exception as e:
         app.logger.error(f"Error when connecting logger: {e}")
+
 
 def get_timestamp(app):
     """
@@ -45,6 +48,7 @@ def get_timestamp(app):
     except Exception as e:
         app.logger.debug(f"Error in get timestamp: {e}")
 
+
 def get_error_msg(app, e):
     """
     Get error response with formatting
@@ -55,11 +59,11 @@ def get_error_msg(app, e):
     """
     try:
         response_data_msg = {
-          "data": "null",
-          "message": f"Server Not Responding Error {e}",
-          "status": "FORBIDDEN",
-          "statusCode": 403,
-          "timestamp": get_timestamp(app)
+            "data": "null",
+            "message": f"Server Not Responding Error {e}",
+            "status": "FORBIDDEN",
+            "statusCode": 403,
+            "timestamp": get_timestamp(app)
         }
 
         return response_data_msg
@@ -67,7 +71,8 @@ def get_error_msg(app, e):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
-def get_response_msg(app,status, statuscode, message, data):
+
+def get_response_msg(app, status, statuscode, message, data):
     """
     Get success response with formatting
 
@@ -93,6 +98,7 @@ def get_response_msg(app,status, statuscode, message, data):
     except Exception as e:
         app.logger.debug(f"Error in get response msg: {e}")
 
+
 def get_unique_student_id(app, all_student_id):
     """
     Get unique student id
@@ -113,6 +119,7 @@ def get_unique_student_id(app, all_student_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique student id: {e}")
 
+
 def get_unique_department_id(app, all_deparment_id):
     """
     Get unique department id
@@ -132,6 +139,7 @@ def get_unique_department_id(app, all_deparment_id):
 
     except Exception as e:
         app.logger.debug(f"Error in get unique department id: {e}")
+
 
 def get_unique_subject_id(app, all_subject_id):
     """
@@ -174,6 +182,7 @@ def get_unique_teacher_id(app, all_teacher_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique teacher: {e}")
 
+
 def get_unique_admin_id(app, all_admin_id):
     """
     Get unique teacher id
@@ -194,6 +203,7 @@ def get_unique_admin_id(app, all_admin_id):
     except Exception as e:
         app.logger.debug(f"Error in get unique admin: {e}")
 
+
 def password_validation(app, password):
     """
     Check password is validate or not
@@ -212,12 +222,12 @@ def password_validation(app, password):
                 capital = True
             try:
                 char = int(char)
-                number=True
+                number = True
             except:
                 pass
 
             if char in special_char_list:
-                special_char=True
+                special_char = True
 
         if capital and number and special_char:
             matching = True
@@ -228,6 +238,7 @@ def password_validation(app, password):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
+
 
 def validate_phone_number(app, phone_number):
     """
@@ -251,6 +262,7 @@ def validate_phone_number(app, phone_number):
 
     except Exception as e:
         app.logger.debug(f"Error in validate password: {e}")
+
 
 def get_admin_data(app, client, db_name, coll_name):
     """
@@ -280,6 +292,34 @@ def get_admin_data(app, client, db_name, coll_name):
 
     except Exception as e:
         app.logger.debug(f"Error in get data from admin database: {e}")
+
+def get_profile_data(app, client, db_name, type):
+    """
+    get all data from student, admin and teacher database table
+
+    :param app: app-name
+    :param client: mongo client
+    :param db_name: database-name
+    :param coll_name: collection-name
+    :return: database_unique_keys and database_userdata
+    """
+    try:
+        if type=="admin":
+            coll_name = "admin_data"
+        elif type=="teacher":
+            coll_name = "teacher_data"
+        else:
+            coll_name = "students_data"
+
+        db = client[db_name]
+        coll = db[coll_name]
+        res = coll.find({})
+        res = list(res)
+        return res[0]
+
+    except Exception as e:
+        app.logger.debug(f"Error in get profile data for database: {e}")
+
 
 def delete_panel_data(app, client, db_name, coll_name, delete_dict):
     """
@@ -323,15 +363,25 @@ def delete_all_panel_data(app, client, db_name, coll_name, panel):
     try:
         db = client[db_name]
         coll = db[coll_name]
-        if panel == "student" or panel == "teacher" or panel == "admin":
+        count = coll.count_documents({})
+        print(f"count: {count}")
+        if (panel == "student" or panel == "teacher" or panel == "admin") and count > 0:
             coll.delete_many({})
             coll1 = db["login_mapping"]
             coll1.delete_many({"type": panel})
+            if panel == "student":
+                coll_class = db["class_data"]
+                coll_class.delete_many({"type": panel})
+            elif panel=="teacher":
+                coll_class = db["subject_mapping"]
+                coll_class.delete_many({"type": panel})
+            return True
         else:
             coll.delete_many({})
-        return "all data deleted"
+            return False
 
     except Exception as e:
+        print(f"Error in delete data from database: {e}")
         app.logger.debug(f"Error in delete data from database: {e}")
 
 def export_panel_data(app, database_data, panel, type):
@@ -410,6 +460,7 @@ def search_panel_data(app, client, db_name, search_value, coll_name):
     except Exception as e:
         print(f"Exception in searching panel data: {e}")
         app.logger.debug(f"Error in search data from database: {e}")
+
 
 def get_all_country_state_names(app):
     try:

@@ -34,7 +34,7 @@
                 <button id="searchButton" type="btn" class="btn btn-primary">Search</button>
             </div>
         </div>
-        <div class="col" style="display: flex; justify-content: center;">
+        <div class="col" id="delete_main_button" style="display: flex; justify-content: center;">
             <div class="search-student-btn">
                 <button id="openButton" type="btn" class="btn btn-danger" style="height: 2.8rem; width: 8rem;">
                     <i class="fa-solid fa-trash"></i>  Delete All
@@ -82,7 +82,7 @@
             <div class="popup" id="popup">
                <h2>Delete all records!</h2>
                <div id="buttons">
-                  <a href="/admin/deleteall/panel" class="btn btn-danger">Confirm</a>
+                  <a id="delete_all_button" class="btn btn-danger">Confirm</a>
                   <button id="closeButton" type="btn" class="btn btn-primary">Go back</button>
                </div>
             </div>
@@ -90,12 +90,23 @@
     </div>
 </form>
 <script>
+    console.log('Going into this function');
+    // Define the search_id object
     search_id = {"student" : ["Student Id..."],
             "admin" : ["Admin Id..."],
             "teacher" : ["Teacher Id..."],
             "department" : ["Department Id...", "Department Name..."],
             "subject" : ["Subject Id...", "Department Name..."],
             "class" : ["Student Id...", "Department Name..."]};
+
+    // Get all the input tags using their ids
+    const id = document.getElementById("id");
+    const username = document.getElementById("username");
+    const contact_no = document.getElementById("contact_no");
+    const email = document.getElementById("email");
+
+    // Store above four buttons into an input_tags array
+    const input_tags = [id, username, contact_no, email];
 
     // Go to search page
     var panel = sessionStorage.getItem("panel");
@@ -110,8 +121,10 @@
 
     // Get the close button
     const closeButton = document.getElementById("closeButton");
-    // Get the confirm button
-    const confirmButton = document.getElementById("confirmButton");
+    // Get the delete_all_button
+    const deleteAllButton = document.getElementById("delete_all_button");
+
+    // Get the delete_main_button
 
     // Function to open the popup
     function openPopup() {
@@ -129,24 +142,54 @@
         popupContainer.style.display = "none";
     }
 
-    function search_results() {
-        action_name = "/search_data/" + panel;
-        document.getElementById('search').action = action_name;
-    }
+    // Add event listener to the delete_all_button
+    document.getElementById("delete_all_button").addEventListener("click", function(event) {
+        // Set the href attribute to the Flask endpoint
+        a_href_name = "/admin/deleteall/" + panel;
+        this.href = a_href_name;
+    });
 
     // Add event listeners to the open and close buttons
     openButton.addEventListener("click", openPopup);
     closeButton.addEventListener("click", closePopup);
-    searchButton.addEventListener("click", search_results);
 
+    // Function to check if any input field is empty
+    function checkInputData() {
+      for (let i = 0; i < input_tags.length; i++) {
+        if (input_tags[i].value !== '') {
+          return true;
+        }
+      }
 
-    console.log('Going into this function');
-    document.getElementById("id").placeholder = search_id[panel][0];
+      return false;
+    }
+
+    // Function to submit the form
+    function submitForm() {
+      const hasInputData = checkInputData();
+      const form = document.getElementById('search');
+
+      if (hasInputData) {
+        console.log('Going to submit form');
+        form.action = "/search_data/" + panel;
+        form.submit();
+      } else {
+        alert('Please input a search value.');
+      }
+    }
+
+    // Add eventlistener to button with id searchButton, where once clicked it will add action to form with id search
+    searchButton.addEventListener("click", submitForm);
+
+    // Set the placeholder text for the search input
+    id.placeholder = search_id[panel][0];
     if (panel in search_id) {
         if (panel == "department" || panel == "subject" || panel =="class") {
-            document.getElementById("username").placeholder = search_id[panel][1];
-            document.getElementById("contact_no").style.visibility = "hidden";
-            document.getElementById("email").style.visibility = "hidden";
+            username.placeholder = search_id[panel][1];
+            contact_no.style.visibility = "hidden";
+            email.style.visibility = "hidden";
+            // Hide the delete_main_button
+            deleteMainButton.style.display = "none";
         }
         else {
             console.log("Going as usual");
