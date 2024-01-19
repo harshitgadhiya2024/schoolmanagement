@@ -10,13 +10,6 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\static\uploads\export_file\export_attendance_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\static\uploads\export_file\export_department_csv.csv">
           <value>
             <Attribute>
@@ -24,63 +17,7 @@
             </Attribute>
           </value>
         </entry>
-        <entry key="\static\uploads\export_file\export_student_attendance_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
         <entry key="\static\uploads\export_file\export_student_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\export_file\export_subject_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\export_file\export_teacher_attendance_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\export_file\export_teacher_csv.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\import_file\export_admin_csv_4.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\import_file\export_admin_csv_5.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\import_file\export_admin_csv_6.csv">
-          <value>
-            <Attribute>
-              <option name="separator" value="," />
-            </Attribute>
-          </value>
-        </entry>
-        <entry key="\static\uploads\import_file\export_department_csv.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

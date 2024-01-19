@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 
-<!-- Mirrored from preschool.dreamstechnologies.com/template/students.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 01 Jan 2024 05:22:16 GMT -->
+<!-- Mirrored from preschool.dreamstechnologies.com/template/add-student.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 01 Jan 2024 05:22:18 GMT -->
 
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0">
-	<title>Portal - Admins</title>
+	<title>Portal - Emails</title>
 
 	<!-- Favicon -->
 	<link rel="shortcut icon" href="/static/assets/img/favicon.png">
@@ -25,20 +25,18 @@
 	<!-- Pe7 CSS -->
 	<link rel="stylesheet" href="/static/assets/plugins/icons/flags/flags.css">
 
+	<!-- Datepicker CSS -->
+	<link rel="stylesheet" href="/static/assets/css/bootstrap-datetimepicker.min.css">
+
 	<!-- Fontawesome CSS -->
 	<link rel="stylesheet" href="/static/assets/plugins/fontawesome/css/fontawesome.min.css">
 	<link rel="stylesheet" href="/static/assets/plugins/fontawesome/css/all.min.css">
 
-	<!-- Datatables CSS -->
-	<link rel="stylesheet" href="/static/assets/plugins/datatables/datatables.min.css">
+	<!-- Select CSS -->
+	<link rel="stylesheet" href="/static/assets/plugins/select2/css/select2.min.css">
 
 	<!-- Main CSS -->
 	<link rel="stylesheet" href="/static/assets/css/style.css">
-	<style>
-		div#DataTables_Table_0_paginate {
-			margin-bottom: 30px;
-		}
-	</style>
 </head>
 
 <body>
@@ -122,11 +120,11 @@
 								<li><a href="/admin_dashboard">Admin Dashboard</a></li>
 							</ul>
 						</li>
-						<li class="submenu active">
+						<li class="submenu">
 							<a href="#"><i class="fas fa-user-cog"></i> <span> Admins</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/admin/admin_data" class="active">Admin List</a></li>
+								<li><a href="/admin/admin_data">Admin List</a></li>
 								<li><a href="/admin/add_admin">Admin Add</a></li>
 							</ul>
 						</li>
@@ -170,10 +168,17 @@
 							</ul>
 						</li>
 						<li class="submenu">
+							<a href="#"><i class="fas fa-book-reader"></i> <span> Attendance</span> <span
+									class="menu-arrow"></span></a>
+							<ul>
+								<li><a href="/admin/attendance_data">Attendance List</a></li>
+							</ul>
+						</li>
+                        <li class="submenu active">
 							<a href="#"><i class="fas fa-book-reader"></i> <span> Email Service</span> <span
 									class="menu-arrow"></span></a>
 							<ul>
-								<li><a href="/email_sending">Email Sending</a></li>
+								<li><a href="/email_sending" class="active">Email Sending</a></li>
 							</ul>
 						</li>
 					</ul>
@@ -188,11 +193,11 @@
 
 				<!-- Page Header -->
 				<div class="page-header">
-					<div class="row">
+					<div class="row align-items-center">
 						<div class="col-sm-12">
 							<!-- <div class="page-sub-header">
-									<h3 class="page-title">Admins</h3>
-								</div> -->
+								<h3 class="page-title">Add Admins</h3>
+							</div> -->
 							<div class="col-md-auto" id="remove_tag" style="margin: 10px;">
 								{% with messages = get_flashed_messages() %} {% if messages %} {% for message in
 								messages %}
@@ -208,98 +213,98 @@
 				</div>
 				<!-- /Page Header -->
 
-				<!-- Search Header -->
-				<div class="student-group-form">
-					<script>
-						sessionStorage.setItem("panel", "admin");
-					</script>
-					{% include 'common_files/search_header.html' %}
-				</div>
-				<!-- /Search Header -->
-
 				<div class="row">
 					<div class="col-sm-12">
-
-						<div class="card card-table comman-shadow">
+						<div class="card comman-shadow">
 							<div class="card-body">
-
-								<!-- Page Header -->
-								<div class="page-header">
-									<div class="row align-items-center">
-										<div class="col">
-											<h3 class="page-title">Admins</h3>
+								<form action="/email_sending" method="POST" enctype="multipart/form-data">
+									<div class="row">
+										<div class="col-12">
+											<h5 class="form-title student-info">Admin Email Sending</h5>
 										</div>
-										<div class="col-auto text-end float-end ms-auto download-grp">
-											<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
-												data-bs-toggle="dropdown" aria-expanded="false">
-												<i class="fa fa-download"></i> Import
-											</button>
-											<ul class="dropdown-menu">
-												<form action ="/admin/import_data/admin" method = "post" enctype="multipart/form-data">
-													<div id="browsebutton"><input class="form-control" type="file" name="file" id="formFile"></div>
-													<div style="display: flex; justify-content: center; align-items: center;">
-														<input class="form-control btn-primary" type="submit" value="Upload" style="width: 75%; color: white;">
-													</div>
-												</form>
-											</ul>
-											<button class="btn btn-outline-primary me-2 dropdown-toggle" type="button"
-												data-bs-toggle="dropdown" aria-expanded="false">
-												<i class="fas fa-download"></i> Export
-											</button>
-											<ul class="dropdown-menu">
-												<li><a class="dropdown-item" href="/admin/export/admin-excel">EXCEL</a></li>
-												<li><a class="dropdown-item" href="/admin/export/admin-csv">CSV</a></li>
-												<li><a class="dropdown-item" href="/admin/export/admin-json">JSON</a></li>
-											</ul>
-											<a href="/admin/add_admin" class="btn btn-primary"><i
-													class="fas fa-plus"></i></a>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>E-Mail</label>
+												<input class="form-control" name="email" value="{{email}}" type="email"
+													placeholder="Enter Email Address">
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Department</label>
+												<select name="department" value="{{department}}" class="form-control select">
+													<option selected>Select Department</option>
+													{% for department in alldepartment %}
+													<option>{{department}}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Student</label>
+												<select name="student" value="{{student}}" class="form-control select">
+													<option selected>Select Student</option>
+													{% for student in allstudent %}
+													<option>{{student}}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Teacher</label>
+												<select name="teacher" value="{{teacher}}" class="form-control select">
+													<option selected>Select Teacher</option>
+													{% for teacher in allteacher %}
+													<option>{{teacher}}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Classes</label>
+												<select name="classes" value="{{classes}}" class="form-control select">
+													<option selected>Select Class</option>
+													<option>A</option>
+													<option>B</option>
+													<option>C</option>
+													<option>D</option>
+												</select>
+											</div>
+										</div>
+										<div class="col-12 col-sm-4">
+											<div class="form-group local-forms">
+												<label>Subject<span class="login-danger">*</span></label>
+												<input class="form-control" name="topic" value="{{topic}}" type="text"
+													placeholder="Enter Subject Title" required>
+											</div>
+										</div>
+										<div class="col-12 col-sm-12">
+											<div class="form-group local-forms">
+												<label>Mail Message<span class="login-danger">*</span></label>
+												<textarea rows="5" cols="5" name="mail_format" class="form-control" placeholder="Enter Your Mail Message Formet" spellcheck="false" required></textarea>
+											</div>
+										</div>
+										
+										<div class="col-12 col-sm-4">
+											<div class="form-group students-up-files">
+												<label>Import Email File (Supported: CSV, EXCEL & JSON)</label>
+												<div class="uplod">
+													<label class="file-upload image-upbtn mb-0">
+														Choose File <input type="file" name="email_file" autocomplete="off">
+													</label>
+												</div>
+											</div>
+										</div>
+										<div class="col-12">
+											<div class="student-submit">
+												<button type="submit" class="btn btn-primary">Submit</button>
+											</div>
 										</div>
 									</div>
-								</div>
-								<!-- /Page Header -->
-
-								<div class="table-responsive">
-									<table
-										class="table border-0 star-student table-hover table-center mb-0 datatable table-striped">
-										<thead class="student-thread">
-											<tr>
-												<!-- <th>
-														<div class="form-check check-tables">
-															<input class="form-check-input" type="checkbox"  value="something">
-														</div>
-													</th> -->
-												{% for key in all_keys %}
-												<th>{{key}}</th>
-												{% endfor %}
-												<th class="text-end">Action</th>
-											</tr>
-										</thead>
-										<tbody>
-											{% for value in all_values %}
-											<tr>
-												<!-- <td>
-														<div class="form-check check-tables">
-															<input class="form-check-input" type="checkbox"  value="something">
-														</div>
-													</td> -->
-												{% for each_value in value %}
-												<td>{{each_value}}</td>
-												{% endfor %}
-												<td class="text-end">
-													<div class="actions">
-														<a href="/admin/edit_data/admin-{{value[1]}}" class="btn btn-sm bg-danger-light">
-															<i class="feather-edit"></i>
-														</a>
-														<a href="/admin/delete_data/admin-{{value[1]}}" class="btn btn-sm bg-danger-light">
-															<i class="fas fa-trash-alt"></i>
-														</a>
-													</div>
-												</td>
-											</tr>
-											{% endfor %}
-										</tbody>
-									</table>
-								</div>
+								</form>
 							</div>
 						</div>
 					</div>
@@ -310,6 +315,23 @@
 
 	</div>
 	<!-- /Main Wrapper -->
+
+	<script>
+        function getProvince() {
+            var selectedCity = document.getElementById("city").value;
+
+            // Make an AJAX request to the server
+            var xhr = new XMLHttpRequest();
+            xhr.onreadystatechange = function () {
+                if (this.readyState == 4 && this.status == 200) {
+                    // Update the province field with the response from the server
+                    document.getElementById("province").value = this.responseText;
+                }
+            };
+            xhr.open("GET", "/get_province?city=" + selectedCity, true);
+            xhr.send();
+        }
+    </script>
 
 	<!-- jQuery -->
 	<script src="/static/assets/js/jquery-3.7.1.min.js"></script>
@@ -323,13 +345,23 @@
 	<!-- Slimscroll JS -->
 	<script src="/static/assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
 
-	<!-- Datatables JS -->
-	<script src="/static/assets/plugins/datatables/datatables.min.js"></script>
+	<!-- Select2 JS -->
+	<script src="/static/assets/plugins/select2/js/select2.min.js"></script>
+
+	<!-- Datepicker Core JS -->
+	<script src="/static/assets/plugins/moment/moment.min.js"></script>
+	<script src="/static/assets/js/bootstrap-datetimepicker.min.js"></script>
 
 	<!-- Custom JS -->
 	<script src="/static/assets/js/script.js"></script>
+	<script>
+		function hide_button() {
+			document.getElementById('remove_tag').style.visibility = 'hidden';
+		}
+	</script>
+
 </body>
 
-<!-- Mirrored from preschool.dreamstechnologies.com/template/students.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 01 Jan 2024 05:22:17 GMT -->
+<!-- Mirrored from preschool.dreamstechnologies.com/template/add-student.html by HTTrack Website Copier/3.x [XR&CO'2014], Mon, 01 Jan 2024 05:22:19 GMT -->
 
 </html>
